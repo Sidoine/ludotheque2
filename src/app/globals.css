@@ -683,6 +683,24 @@ textarea:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.game-link {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+.game-link:hover {
+  color: var(--green);
+  text-decoration: underline;
+}
 .activity-title > span {
   color: #9aa09c;
   font-size: 8px;
@@ -720,21 +738,88 @@ textarea:focus-visible {
 }
 .avatar {
   width: 35px;
+  min-width: 35px;
   height: 35px;
-  display: inline-grid;
+  display: inline-flex;
   place-items: center;
+  justify-content: center;
+  gap: 5px;
+  overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.85);
   border-radius: 50%;
   color: white;
   font-size: 9px;
   font-weight: 800;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition:
+    width 180ms ease,
+    border-radius 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+  interpolate-size: allow-keywords;
+  white-space: nowrap;
+}
+.avatar:hover,
+.avatar:focus-visible {
+  width: fit-content;
+  min-width: 0;
+  max-width: calc(100vw - 24px);
+  padding-inline: 8px;
+  border-radius: 999px;
+  justify-content: flex-start;
+  z-index: 3;
+}
+.avatar-initials,
+.avatar-name {
+  flex: 0 0 auto;
+}
+.avatar-initials {
+  max-width: 2em;
+  opacity: 1;
+  transition:
+    max-width 120ms ease,
+    opacity 120ms ease;
+}
+.avatar-name {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-width 180ms ease,
+    opacity 120ms ease;
+}
+.avatar:hover .avatar-name,
+.avatar:focus-visible .avatar-name {
+  max-width: calc(100vw - 64px);
+  opacity: 1;
+}
+.avatar:hover .avatar-initials,
+.avatar:focus-visible .avatar-initials {
+  max-width: 0;
+  opacity: 0;
+}
+.avatar-button {
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.avatar-button:hover,
+.avatar-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
 }
 .avatar-sm {
   width: 25px;
+  min-width: 25px;
+  max-width: 25px;
   height: 25px;
   margin-left: -5px;
   font-size: 7px;
+}
+.avatar-sm:hover,
+.avatar-sm:focus-visible {
+  width: fit-content;
+  min-width: 0;
 }
 .avatar-more {
   color: #68736d;
