@@ -59,8 +59,8 @@ export async function isAdminRequest(request: Request) {
   const person = await firstPerson();
   return Boolean(
     person &&
-    String(person.id) === personId &&
-    validSignature(`${personId}.${issuedAt}`, signature),
+      String(person.id) === personId &&
+      validSignature(`${personId}.${issuedAt}`, signature),
   );
 }
 
