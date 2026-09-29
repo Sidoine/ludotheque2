@@ -1,5 +1,6 @@
 "use client";
 
+import styled from "@emotion/styled";
 import {
   Check,
   Link2,
@@ -19,6 +20,428 @@ import { useEffect, useState } from "react";
 import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar } from "./primitives";
 import type { Game, Person, Play } from "./types";
+
+const ModalForm = styled.form`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  padding: 22px 27px 25px;
+  @media (max-width: 700px) {
+    padding: 19px;
+  }
+`;
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+`;
+const FormField = styled.label<{
+  $wide?: boolean;
+}>`
+  grid-column: ${({ $wide }) => ($wide ? "span 2" : "auto")};
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  & > span,
+  legend {
+    color: #56635c;
+    font-size: 9px;
+    font-weight: 750;
+  }
+  & > span small {
+    color: #a0a5a2;
+    font-weight: 400;
+  }
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 11px;
+    border: 1px solid #dcdad2;
+    border-radius: 8px;
+    outline: 0;
+    color: var(--ink);
+    background: white;
+    font-size: 11px;
+    transition:
+      border 0.15s,
+      box-shadow 0.15s;
+    &:focus {
+      border-color: #91aa9c;
+      box-shadow: 0 0 0 3px rgba(49, 95, 77, 0.07);
+    }
+  }
+  textarea {
+    resize: vertical;
+    padding-top: 10px;
+    line-height: 1.4;
+  }
+  @media (max-width: 700px) {
+    grid-column: auto;
+  }
+`;
+const ActionButton = styled.button<{
+  $variant?: "primary" | "secondary" | "ghost";
+}>`
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid
+    ${({ $variant = "primary" }) =>
+      $variant === "primary"
+        ? "var(--forest)"
+        : $variant === "secondary"
+          ? "#d7d5ce"
+          : "transparent"};
+  border-radius: 9px;
+  color: ${({ $variant = "primary" }) =>
+    $variant === "primary"
+      ? "white"
+      : $variant === "secondary"
+        ? "#4e5b55"
+        : "var(--muted)"};
+  background: ${({ $variant = "primary" }) =>
+    $variant === "primary"
+      ? "var(--forest)"
+      : $variant === "secondary"
+        ? "rgba(255,255,255,.72)"
+        : "transparent"};
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  &:hover:not(:disabled) {
+    background: ${({ $variant = "primary" }) =>
+      $variant === "primary"
+        ? "var(--forest-dark)"
+        : $variant === "secondary"
+          ? "white"
+          : "#f3f2ed"};
+  }
+`;
+const Spinner = styled(Loader2)`
+  animation: modal-spin 0.9s linear infinite;
+  @keyframes modal-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+const BggHelper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px;
+  border-radius: 11px;
+  background: #edf2ee;
+  b {
+    font-size: 10px;
+  }
+  small {
+    margin: 2px 0 6px;
+    color: var(--muted);
+    font-size: 8px;
+  }
+`;
+const BggLinkRow = styled.div`
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  & > span {
+    width: 35px;
+    height: 35px;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    border-radius: 9px;
+    color: var(--forest);
+    background: white;
+  }
+  label {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  input {
+    min-width: 0;
+    height: 35px;
+    padding: 0 10px;
+    border: 1px solid #d5ddd7;
+    border-radius: 7px;
+    outline: 0;
+    background: white;
+    font-size: 9px;
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: 32px 1fr;
+    & > button {
+      grid-column: 1 / -1;
+    }
+  }
+`;
+const BggSearchHelper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 13px;
+  & > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  small {
+    color: var(--muted);
+    font-size: 8px;
+  }
+`;
+const BggResults = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  width: 100%;
+  max-height: 190px;
+  overflow-y: auto;
+  padding: 0 13px;
+`;
+const BggResult = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  &:hover {
+    border-color: var(--forest);
+    background: var(--forest-soft);
+  }
+  span {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  small {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 9px;
+  }
+`;
+const CoverUpload = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+`;
+const CoverUploadButton = styled.label`
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid #dcdad2;
+  border-radius: 8px;
+  color: var(--forest);
+  background: #eef3ed;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  &:hover {
+    border-color: var(--forest);
+    background: #e3eee5;
+  }
+`;
+const HiddenFileInput = styled.input`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+`;
+const CoverPreview = styled.img`
+  display: block;
+  width: 78px;
+  height: 96px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(24, 39, 30, 0.12);
+`;
+const InputWithSuffix = styled.div`
+  position: relative;
+  i {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+    color: var(--muted);
+    font-size: 9px;
+    font-style: normal;
+  }
+  input {
+    padding-right: 36px;
+  }
+`;
+const InputWithIcon = styled.div`
+  position: relative;
+  svg {
+    position: absolute;
+    top: 12px;
+    left: 11px;
+    color: #89938e;
+  }
+  input {
+    padding-left: 34px;
+  }
+`;
+const ChoiceField = styled.fieldset`
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  legend {
+    margin-bottom: 7px;
+    color: #56635c;
+    font-size: 9px;
+    font-weight: 750;
+    small {
+      margin-left: 5px;
+      color: #a0a5a2;
+      font-weight: 400;
+    }
+  }
+`;
+const ChoiceList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+const ChoiceButton = styled.button<{
+  $selected: boolean;
+  $winner?: boolean;
+}>`
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px ${({ $winner }) => ($winner ? "10px" : "9px 9px 4px 5px")};
+  border: 1px solid
+    ${({ $selected }) => ($selected ? "#9fb8aa" : "var(--line)")};
+  border-radius: 20px;
+  color: ${({ $selected }) => ($selected ? "var(--forest)" : "inherit")};
+  background: ${({ $selected }) =>
+    $selected ? "var(--forest-soft)" : "white"};
+  font-size: 9px;
+  font-weight: ${({ $selected }) => ($selected ? 700 : 400)};
+  cursor: pointer;
+  & > svg:last-child {
+    display: ${({ $selected }) => ($selected ? "block" : "none")};
+  }
+`;
+const ResultChoice = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+`;
+const ResultButton = styled.button<{
+  $selected: boolean;
+  $won: boolean;
+}>`
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid
+    ${({ $selected, $won }) =>
+      $selected ? ($won ? "#90ad9d" : "#d7aa9e") : "var(--line)"};
+  border-radius: 9px;
+  color: ${({ $selected, $won }) =>
+    $selected ? ($won ? "var(--forest)" : "#a35341") : "inherit"};
+  background: ${({ $selected, $won }) =>
+    $selected ? ($won ? "var(--forest-soft)" : "#f6e7e2") : "white"};
+  font-size: 10px;
+  cursor: pointer;
+`;
+const SwitchField = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  & > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  & > span {
+    width: 31px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 10px;
+    color: white;
+    background: #c8cbc8;
+    transition: 0.15s;
+  }
+  & > span svg {
+    width: 14px;
+    height: 14px;
+    padding: 2px;
+    border-radius: 50%;
+    color: transparent;
+    background: white;
+    transition: 0.15s;
+  }
+  & > input:checked + span {
+    justify-content: flex-end;
+    background: var(--forest);
+  }
+  & > input:checked + span svg {
+    color: var(--forest);
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+  b {
+    font-size: 10px;
+  }
+  small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 8px;
+  }
+`;
 export function LoginModal({
   onClose,
   onAuthenticated,
@@ -52,27 +475,22 @@ export function LoginModal({
       subtitle="Les visiteurs peuvent consulter la ludothèque en lecture seule."
       onClose={onClose}
     >
-      <form className="modal-form" onSubmit={submit}>
+      <ModalForm onSubmit={submit}>
         <ModalContent>
-          <label className="field">
+          <FormField>
             <span>Mot de passe</span>
             <input autoFocus required name="password" type="password" />
-          </label>
+          </FormField>
         </ModalContent>
         <ModalActions>
-          <button type="button" className="ghost-button" onClick={onClose}>
+          <ActionButton $variant="ghost" type="button" onClick={onClose}>
             Annuler
-          </button>
-          <button className="primary-button" disabled={loading}>
-            {loading ? (
-              <Loader2 className="spin" size={17} />
-            ) : (
-              <LogIn size={17} />
-            )}{" "}
-            Se connecter
-          </button>
+          </ActionButton>
+          <ActionButton disabled={loading}>
+            {loading ? <Spinner size={17} /> : <LogIn size={17} />} Se connecter
+          </ActionButton>
         </ModalActions>
-      </form>
+      </ModalForm>
     </Modal>
   );
 }
@@ -295,10 +713,10 @@ export function GameModal({
       onClose={onClose}
       wide
     >
-      <form className="modal-form" onSubmit={submit}>
+      <ModalForm onSubmit={submit}>
         <ModalContent>
-          <div className="bgg-helper">
-            <div className="bgg-link-row">
+          <BggHelper>
+            <BggLinkRow>
               <span>
                 <Link2 size={19} />
               </span>
@@ -313,43 +731,35 @@ export function GameModal({
                   placeholder="https://boardgamegeek.com/boardgame/…"
                 />
               </label>
-              <button
-                className="secondary-button"
+              <ActionButton
+                $variant="secondary"
                 type="button"
                 onClick={fetchBgg}
                 disabled={loadingBgg}
               >
-                {loadingBgg ? (
-                  <Loader2 className="spin" size={16} />
-                ) : (
-                  <Sparkles size={16} />
-                )}{" "}
+                {loadingBgg ? <Spinner size={16} /> : <Sparkles size={16} />}{" "}
                 Récupérer
-              </button>
-            </div>
-            <div className="bgg-search-helper">
+              </ActionButton>
+            </BggLinkRow>
+            <BggSearchHelper>
               <div>
                 <b>Ou rechercher par nom</b>
                 <small>Utilise le nom saisi dans la fiche.</small>
               </div>
-              <button
-                className="secondary-button"
+              <ActionButton
+                $variant="secondary"
                 type="button"
                 onClick={searchBgg}
                 disabled={searchingBgg}
               >
-                {searchingBgg ? (
-                  <Loader2 className="spin" size={16} />
-                ) : (
-                  <Search size={16} />
-                )}{" "}
+                {searchingBgg ? <Spinner size={16} /> : <Search size={16} />}{" "}
                 {searchingBgg ? "Recherche…" : "Rechercher"}
-              </button>
-            </div>
+              </ActionButton>
+            </BggSearchHelper>
             {bggResults.length > 0 && (
-              <div className="bgg-results" aria-label="Résultats BoardGameGeek">
+              <BggResults aria-label="Résultats BoardGameGeek">
                 {bggResults.map((result) => (
-                  <button
+                  <BggResult
                     type="button"
                     key={result.id}
                     onClick={() => selectBggResult(result.id)}
@@ -357,13 +767,13 @@ export function GameModal({
                   >
                     <span>{result.name}</span>
                     {result.year && <small>{result.year}</small>}
-                  </button>
+                  </BggResult>
                 ))}
-              </div>
+              </BggResults>
             )}
-          </div>
-          <div className="form-grid two">
-            <label className="field span-2">
+          </BggHelper>
+          <FormGrid>
+            <FormField $wide>
               <span>Nom du jeu *</span>
               <input
                 required
@@ -371,16 +781,15 @@ export function GameModal({
                 onChange={(event) => update("title", event.target.value)}
                 placeholder="Ex. Harmonies"
               />
-            </label>
-            <div className="field span-2">
+            </FormField>
+            <FormField as="div" $wide>
               <span>Image de couverture</span>
-              <div className="cover-upload">
-                <label className="cover-upload-button" htmlFor="game-cover">
+              <CoverUpload>
+                <CoverUploadButton htmlFor="game-cover">
                   <Upload size={16} /> Importer une couverture
-                </label>
-                <input
+                </CoverUploadButton>
+                <HiddenFileInput
                   id="game-cover"
-                  className="cover-upload-input"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={(event) =>
@@ -392,16 +801,15 @@ export function GameModal({
                 ) : (
                   <small>JPG, PNG, WEBP ou GIF · 5 Mo maximum</small>
                 )}
-              </div>
+              </CoverUpload>
               {coverPreview && (
-                <img
-                  className="cover-upload-preview"
+                <CoverPreview
                   src={coverPreview}
                   alt="Prévisualisation de la couverture"
                 />
               )}
-            </div>
-            <label className="field">
+            </FormField>
+            <FormField>
               <span>Année</span>
               <input
                 type="number"
@@ -409,10 +817,10 @@ export function GameModal({
                 onChange={(event) => update("year", event.target.value)}
                 placeholder="2024"
               />
-            </label>
-            <label className="field">
+            </FormField>
+            <FormField>
               <span>Durée moyenne</span>
-              <div className="input-suffix">
+              <InputWithSuffix>
                 <input
                   type="number"
                   value={form.playingTime}
@@ -422,9 +830,9 @@ export function GameModal({
                   placeholder="45"
                 />
                 <i>min</i>
-              </div>
-            </label>
-            <label className="field">
+              </InputWithSuffix>
+            </FormField>
+            <FormField>
               <span>Joueurs min.</span>
               <input
                 type="number"
@@ -432,8 +840,8 @@ export function GameModal({
                 value={form.minPlayers}
                 onChange={(event) => update("minPlayers", event.target.value)}
               />
-            </label>
-            <label className="field">
+            </FormField>
+            <FormField>
               <span>Joueurs max.</span>
               <input
                 type="number"
@@ -441,37 +849,35 @@ export function GameModal({
                 value={form.maxPlayers}
                 onChange={(event) => update("maxPlayers", event.target.value)}
               />
-            </label>
-            <label className="field span-2">
+            </FormField>
+            <FormField $wide>
               <span>Catégories</span>
               <input
                 value={form.categories}
                 onChange={(event) => update("categories", event.target.value)}
                 placeholder="Stratégie, Cartes, Famille…"
               />
-            </label>
-          </div>
-          <fieldset className="choice-field">
+            </FormField>
+          </FormGrid>
+          <ChoiceField>
             <legend>
               Propriétaires <small>Plusieurs choix possibles</small>
             </legend>
-            <div className="person-choices owners">
+            <ChoiceList>
               {people.map((person) => (
-                <button
+                <ChoiceButton
                   type="button"
-                  className={
-                    form.ownerIds.includes(person.id) ? "selected" : ""
-                  }
+                  $selected={form.ownerIds.includes(person.id)}
                   key={person.id}
                   onClick={() => toggleOwner(person.id)}
                 >
                   <Avatar person={person} small /> {person.name}
                   <Check size={14} />
-                </button>
+                </ChoiceButton>
               ))}
-            </div>
-          </fieldset>
-          <label className="switch-line">
+            </ChoiceList>
+          </ChoiceField>
+          <SwitchField>
             <input
               type="checkbox"
               checked={form.cooperative}
@@ -484,16 +890,16 @@ export function GameModal({
               <b>Jeu coopératif</b>
               <small>Le résultat sera enregistré pour tout le groupe.</small>
             </div>
-          </label>
+          </SwitchField>
           <input type="hidden" name="bggId" value={form.bggId} />
         </ModalContent>
         <ModalActions>
-          <button type="button" className="ghost-button" onClick={onClose}>
+          <ActionButton $variant="ghost" type="button" onClick={onClose}>
             Annuler
-          </button>
-          <button className="primary-button" disabled={saving}>
+          </ActionButton>
+          <ActionButton disabled={saving}>
             {saving ? (
-              <Loader2 className="spin" size={17} />
+              <Spinner size={17} />
             ) : editingGame ? (
               <Check size={17} />
             ) : (
@@ -502,9 +908,9 @@ export function GameModal({
             {editingGame
               ? "Enregistrer les modifications"
               : "Ajouter à la ludothèque"}
-          </button>
+          </ActionButton>
         </ModalActions>
-      </form>
+      </ModalForm>
     </Modal>
   );
 }
@@ -652,10 +1058,10 @@ export function PlayModal({
       onClose={onClose}
       wide
     >
-      <form className="modal-form" onSubmit={(event) => submit(event, false)}>
+      <ModalForm onSubmit={(event) => submit(event, false)}>
         <ModalContent>
-          <div className="form-grid two">
-            <label className="field span-2">
+          <FormGrid>
+            <FormField $wide>
               <span>Jeu *</span>
               <select
                 value={gameId}
@@ -671,8 +1077,8 @@ export function PlayModal({
                   </option>
                 ))}
               </select>
-            </label>
-            <label className="field">
+            </FormField>
+            <FormField>
               <span>Date *</span>
               <input
                 name="date"
@@ -680,14 +1086,14 @@ export function PlayModal({
                 required
                 defaultValue={defaults.date}
               />
-            </label>
-            <label className="field">
+            </FormField>
+            <FormField>
               <span>Heure</span>
               <input name="time" type="time" defaultValue={defaults.time} />
-            </label>
-            <label className="field span-2">
+            </FormField>
+            <FormField $wide>
               <span>Lieu *</span>
-              <div className="input-icon">
+              <InputWithIcon>
                 <MapPin size={16} />
                 <input
                   name="location"
@@ -695,16 +1101,16 @@ export function PlayModal({
                   defaultValue={defaults.location}
                   placeholder="À la maison, chez Marc…"
                 />
-              </div>
-            </label>
-          </div>
-          <fieldset className="choice-field">
+              </InputWithIcon>
+            </FormField>
+          </FormGrid>
+          <ChoiceField>
             <legend>Participants *</legend>
-            <div className="person-choices">
+            <ChoiceList>
               {people.map((person) => (
-                <button
+                <ChoiceButton
                   type="button"
-                  className={participants.has(person.id) ? "selected" : ""}
+                  $selected={participants.has(person.id)}
                   key={person.id}
                   onClick={() =>
                     toggle(setParticipants, participants, person.id)
@@ -712,53 +1118,56 @@ export function PlayModal({
                 >
                   <Avatar person={person} small /> {person.name}
                   <Check size={14} />
-                </button>
+                </ChoiceButton>
               ))}
-            </div>
-          </fieldset>
+            </ChoiceList>
+          </ChoiceField>
           {selectedGame?.cooperative ? (
-            <fieldset className="choice-field">
+            <ChoiceField>
               <legend>Résultat du groupe</legend>
-              <div className="result-choice">
-                <button
+              <ResultChoice>
+                <ResultButton
                   type="button"
-                  className={groupWon === true ? "selected win" : ""}
+                  $selected={groupWon === true}
+                  $won
                   onClick={() => setGroupWon(true)}
                 >
                   <Trophy size={17} /> Victoire
-                </button>
-                <button
+                </ResultButton>
+                <ResultButton
                   type="button"
-                  className={groupWon === false ? "selected lose" : ""}
+                  $selected={groupWon === false}
+                  $won={false}
                   onClick={() => setGroupWon(false)}
                 >
                   <X size={17} /> Défaite
-                </button>
-              </div>
-            </fieldset>
+                </ResultButton>
+              </ResultChoice>
+            </ChoiceField>
           ) : (
-            <fieldset className="choice-field">
+            <ChoiceField>
               <legend>
                 Gagnant·e·s <small>Plusieurs choix possibles</small>
               </legend>
-              <div className="person-choices winners">
+              <ChoiceList>
                 {people
                   .filter((person) => participants.has(person.id))
                   .map((person) => (
-                    <button
+                    <ChoiceButton
                       type="button"
-                      className={winners.has(person.id) ? "selected" : ""}
+                      $selected={winners.has(person.id)}
+                      $winner
                       key={person.id}
                       onClick={() => toggle(setWinners, winners, person.id)}
                     >
                       <Trophy size={14} /> {person.name}
                       <Check size={14} />
-                    </button>
+                    </ChoiceButton>
                   ))}
-              </div>
-            </fieldset>
+              </ChoiceList>
+            </ChoiceField>
           )}
-          <label className="field">
+          <FormField as="label">
             <span>Notes de partie</span>
             <textarea
               name="notes"
@@ -766,19 +1175,19 @@ export function PlayModal({
               defaultValue={initialPlay?.notes ?? ""}
               placeholder="Étape de la campagne, scénario, moments mémorables…"
             />
-          </label>
+          </FormField>
         </ModalContent>
         <ModalActions split>
-          <button type="button" className="ghost-button" onClick={onClose}>
+          <ActionButton $variant="ghost" type="button" onClick={onClose}>
             Annuler
-          </button>
+          </ActionButton>
           <div>
             {!initialPlay && (
-              <button
+              <ActionButton
+                $variant="secondary"
                 type="submit"
                 name="another"
                 value="yes"
-                className="secondary-button"
                 disabled={saving}
                 onClick={(event) => {
                   event.preventDefault();
@@ -794,19 +1203,15 @@ export function PlayModal({
                 }}
               >
                 <Plus size={16} /> Enregistrer & continuer
-              </button>
+              </ActionButton>
             )}
-            <button className="primary-button" disabled={saving}>
-              {saving ? (
-                <Loader2 className="spin" size={17} />
-              ) : (
-                <Check size={17} />
-              )}{" "}
+            <ActionButton disabled={saving}>
+              {saving ? <Spinner size={17} /> : <Check size={17} />}{" "}
               {initialPlay ? "Enregistrer les modifications" : "Enregistrer"}
-            </button>
+            </ActionButton>
           </div>
         </ModalActions>
-      </form>
+      </ModalForm>
     </Modal>
   );
 }
@@ -852,9 +1257,9 @@ export function PersonModal({
       subtitle="Un nouveau visage autour de la table."
       onClose={onClose}
     >
-      <form className="modal-form" onSubmit={submit}>
+      <ModalForm onSubmit={submit}>
         <ModalContent>
-          <label className="field">
+          <FormField>
             <span>Prénom ou nom *</span>
             <input
               autoFocus
@@ -863,8 +1268,8 @@ export function PersonModal({
               onChange={(event) => setName(event.target.value)}
               placeholder="Ex. Camille"
             />
-          </label>
-          <label className="field">
+          </FormField>
+          <FormField>
             <span>
               Email <small>facultatif</small>
             </span>
@@ -874,8 +1279,8 @@ export function PersonModal({
               onChange={(event) => setEmail(event.target.value)}
               placeholder="camille@exemple.com"
             />
-          </label>
-          <label className="switch-line">
+          </FormField>
+          <SwitchField>
             <input
               type="checkbox"
               checked={isHousehold}
@@ -890,24 +1295,24 @@ export function PersonModal({
                 Cette personne peut posséder les jeux de votre collection.
               </small>
             </div>
-          </label>
+          </SwitchField>
         </ModalContent>
         <ModalActions>
-          <button type="button" className="ghost-button" onClick={onClose}>
+          <ActionButton $variant="ghost" type="button" onClick={onClose}>
             Annuler
-          </button>
-          <button className="primary-button" disabled={saving}>
+          </ActionButton>
+          <ActionButton disabled={saving}>
             {saving ? (
-              <Loader2 className="spin" size={17} />
+              <Spinner size={17} />
             ) : editingPerson ? (
               <Check size={17} />
             ) : (
               <UserPlus size={17} />
             )}{" "}
             {editingPerson ? "Enregistrer" : "Ajouter"}
-          </button>
+          </ActionButton>
         </ModalActions>
-      </form>
+      </ModalForm>
     </Modal>
   );
 }

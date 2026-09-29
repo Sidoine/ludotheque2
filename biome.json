@@ -39,5 +39,17 @@
         "useIterableCallbackReturn": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/emotion-registry.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ]
 }

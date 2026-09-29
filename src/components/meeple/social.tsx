@@ -1,5 +1,6 @@
 "use client";
 
+import styled from "@emotion/styled";
 import {
   ArrowRight,
   Dices,
@@ -17,6 +18,385 @@ import {
   relativeDate,
 } from "./primitives";
 import type { Person, Play } from "./types";
+
+const PlaysLayout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 18px;
+`;
+const PlayHistory = styled.div`
+  padding: 22px 25px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+  section + section {
+    margin-top: 25px;
+  }
+`;
+const MonthTitle = styled.h2`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 500;
+  text-transform: capitalize;
+  span {
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 10px;
+  }
+`;
+const PlayRow = styled.article`
+  display: grid;
+  grid-template-columns: 38px 50px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 82px;
+  padding: 12px 0;
+  border-top: 1px solid #eeece6;
+  &:first-of-type {
+    border-top: 0;
+  }
+`;
+const PlayDate = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted);
+  strong {
+    color: var(--forest);
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 500;
+  }
+  span {
+    font-size: 9px;
+    text-transform: capitalize;
+  }
+`;
+const PlayMain = styled.div`
+  min-width: 0;
+  h3 {
+    margin: 0 0 6px;
+    font-family: var(--serif);
+    font-size: 14px;
+  }
+  p {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow: hidden;
+    margin: 0;
+    color: var(--muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  p i {
+    width: 3px;
+    height: 3px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+`;
+const PlayWinner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  color: var(--forest);
+  font-size: 10px;
+`;
+const Muted = styled.span`
+  color: var(--muted);
+`;
+const PlayEdit = styled.button`
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  &:hover {
+    color: var(--forest);
+    background: var(--forest-soft);
+  }
+`;
+const SideTip = styled.aside`
+  position: relative;
+  align-self: start;
+  padding: 27px 20px 20px;
+  border-radius: 13px;
+  color: var(--ink);
+  background: #e8eee8;
+  & > span {
+    position: absolute;
+    top: -14px;
+    right: 20px;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--forest-dark);
+    background: #dfcf9c;
+  }
+  h3 {
+    margin: 0 0 8px;
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+  }
+  p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.55;
+  }
+  button {
+    width: 100%;
+    margin-top: 18px;
+  }
+`;
+const PrimaryButton = styled.button`
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--forest);
+  border-radius: 9px;
+  color: white;
+  background: var(--forest);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+const ReadOnlyNote = styled.p`
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+`;
+const ContentPanel = styled.div`
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+`;
+const PeopleIntro = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+  h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 500;
+  }
+`;
+const Eyebrow = styled.p`
+  margin: 0 0 5px;
+  color: var(--terracotta);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+`;
+const SecondaryButton = styled.button`
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid #d7d5ce;
+  border-radius: 9px;
+  color: #4e5b55;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+const PeopleGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+`;
+const PersonCard = styled.article`
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 11px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffefa;
+  cursor: pointer;
+  &:hover {
+    border-color: #b8c9be;
+    box-shadow: var(--shadow);
+  }
+  h3 {
+    margin: 0 0 4px;
+    font-family: var(--serif);
+    font-size: 14px;
+  }
+  h3 span {
+    margin-left: 5px;
+    color: var(--forest);
+    font-family: inherit;
+    font-size: 8px;
+  }
+  p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  dl {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 10px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  dl div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  dt {
+    color: var(--muted);
+    font-size: 8px;
+  }
+  dd {
+    margin: 0;
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 700;
+  }
+`;
+const PersonEdit = styled.button`
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  &:hover {
+    color: var(--forest);
+    background: var(--forest-soft);
+  }
+`;
+const DetailsPage = styled.div`
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+`;
+const DetailsToolbar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+`;
+const BackButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+`;
+const DetailsHeading = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 500;
+  }
+`;
+const DetailsAvatar = styled.span`
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--forest);
+  background: var(--forest-soft);
+  font-size: 22px;
+`;
+const DetailsStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+`;
+const DetailsColumns = styled.div`
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+`;
+const DetailsSection = styled.section`
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+`;
+const DetailsList = styled.div``;
+const DetailsRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+`;
+const Charts = styled.div`
+  display: grid;
+  gap: 18px;
+`;
+const ChartWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 18px;
+`;
+const Chart = styled.div`
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: conic-gradient(var(--forest) 0 65%, #dfcf9c 65% 100%);
+`;
+const Legend = styled.div`
+  display: grid;
+  gap: 8px;
+  font-size: 10px;
+`;
+const Empty = styled.p`
+  color: var(--muted);
+  font-size: 11px;
+`;
+const Result = styled.em<{ $lost: boolean }>`
+  color: ${({ $lost }) => ($lost ? "var(--terracotta)" : "inherit")};
+  font-style: normal;
+`;
 export function PlaysView({
   plays,
   onAdd,
@@ -42,30 +422,30 @@ export function PlaysView({
     return result;
   }, {});
   return (
-    <div className="plays-layout">
-      <div className="panel play-history">
+    <PlaysLayout>
+      <PlayHistory>
         {Object.entries(grouped).map(([month, monthPlays]) => (
           <section key={month}>
-            <h2 className="month-title">
+            <MonthTitle>
               {month}
               <span>
                 {monthPlays.length} partie{monthPlays.length > 1 ? "s" : ""}
               </span>
-            </h2>
+            </MonthTitle>
             {monthPlays.map((play) => {
               const winners = play.participants.filter((item) => item.isWinner);
               return (
-                <article className="play-row" key={play.id}>
-                  <div className="play-date">
+                <PlayRow key={play.id}>
+                  <PlayDate>
                     <strong>{new Date(play.playedAt).getDate()}</strong>
                     <span>
                       {new Intl.DateTimeFormat("fr-FR", {
                         weekday: "short",
                       }).format(new Date(play.playedAt))}
                     </span>
-                  </div>
-                  <GameImage game={play.game} />
-                  <div className="play-main">
+                  </PlayDate>
+                  <GameImage game={play.game} variant="activity" />
+                  <PlayMain>
                     <h3>
                       <GameLink
                         game={play.game}
@@ -81,12 +461,12 @@ export function PlaysView({
                         </>
                       ) : null}
                     </p>
-                  </div>
+                  </PlayMain>
                   <AvatarStack
                     people={play.participants.map((item) => item.person)}
                     onOpenPerson={onOpenPerson}
                   />
-                  <div className="play-winner">
+                  <PlayWinner>
                     {winners.length ? (
                       <>
                         <Trophy size={14} />
@@ -95,26 +475,25 @@ export function PlaysView({
                         </span>
                       </>
                     ) : (
-                      <span className="muted">Résultat non noté</span>
+                      <Muted>Résultat non noté</Muted>
                     )}
-                  </div>
+                  </PlayWinner>
                   {canEdit && (
-                    <button
-                      className="play-edit"
+                    <PlayEdit
                       type="button"
                       aria-label={`Modifier la partie de ${play.game.title}`}
                       onClick={() => onEdit(play)}
                     >
                       <Pencil size={15} />
-                    </button>
+                    </PlayEdit>
                   )}
-                </article>
+                </PlayRow>
               );
             })}
           </section>
         ))}
-      </div>
-      <aside className="side-tip">
+      </PlayHistory>
+      <SideTip>
         <span>
           <Dices size={24} />
         </span>
@@ -124,16 +503,14 @@ export function PlaysView({
           pour toute la soirée.
         </p>
         {canEdit ? (
-          <button className="primary-button full" type="button" onClick={onAdd}>
+          <PrimaryButton type="button" onClick={onAdd}>
             <Plus size={17} /> Ajouter une partie
-          </button>
+          </PrimaryButton>
         ) : (
-          <p className="read-only-note">
-            Connectez-vous pour ajouter une partie.
-          </p>
+          <ReadOnlyNote>Connectez-vous pour ajouter une partie.</ReadOnlyNote>
         )}
-      </aside>
-    </div>
+      </SideTip>
+    </PlaysLayout>
   );
 }
 
@@ -153,19 +530,19 @@ export function PeopleView({
   canEdit: boolean;
 }) {
   return (
-    <div className="content-panel">
-      <div className="people-intro">
+    <ContentPanel>
+      <PeopleIntro>
         <div>
-          <p className="eyebrow">Votre tablée</p>
+          <Eyebrow>Votre tablée</Eyebrow>
           <h2>{people.length} personnes avec qui partager de bons moments</h2>
         </div>
         {canEdit && (
-          <button className="secondary-button" type="button" onClick={onAdd}>
+          <SecondaryButton type="button" onClick={onAdd}>
             <UserPlus size={17} /> Ajouter quelqu’un
-          </button>
+          </SecondaryButton>
         )}
-      </div>
-      <div className="people-grid">
+      </PeopleIntro>
+      <PeopleGrid>
         {people.map((person) => {
           const personPlays = plays.filter((play) =>
             play.participants.some((item) => item.personId === person.id),
@@ -176,8 +553,7 @@ export function PeopleView({
             ),
           ).length;
           return (
-            <article
-              className="person-card"
+            <PersonCard
               key={person.id}
               role="button"
               tabIndex={0}
@@ -198,8 +574,7 @@ export function PeopleView({
                 <p>{person.email || "Partenaire de jeu"}</p>
               </div>
               {canEdit && (
-                <button
-                  className="person-edit"
+                <PersonEdit
                   type="button"
                   aria-label={`Modifier ${person.name}`}
                   onClick={(event) => {
@@ -208,7 +583,7 @@ export function PeopleView({
                   }}
                 >
                   <Pencil size={15} />
-                </button>
+                </PersonEdit>
               )}
               <dl>
                 <div>
@@ -228,11 +603,11 @@ export function PeopleView({
                   </dd>
                 </div>
               </dl>
-            </article>
+            </PersonCard>
           );
         })}
-      </div>
-    </div>
+      </PeopleGrid>
+    </ContentPanel>
   );
 }
 
@@ -308,35 +683,31 @@ export function PersonDetailsPage({
     : "#e5e8e3";
 
   return (
-    <div className="game-details-page person-details-page">
-      <div className="game-details-toolbar">
-        <button className="back-button" type="button" onClick={onBack}>
-          <ArrowRight className="back-icon" size={16} /> Joueurs & amis
-        </button>
+    <DetailsPage>
+      <DetailsToolbar>
+        <BackButton type="button" onClick={onBack}>
+          <ArrowRight size={16} /> Joueurs & amis
+        </BackButton>
         {canEdit && (
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => onEdit(person)}
-          >
+          <SecondaryButton type="button" onClick={() => onEdit(person)}>
             <Pencil size={16} /> Modifier
-          </button>
+          </SecondaryButton>
         )}
-      </div>
-      <div className="person-details-heading">
-        <span className="person-details-avatar">
+      </DetailsToolbar>
+      <DetailsHeading>
+        <DetailsAvatar>
           <Avatar person={person} />
-        </span>
+        </DetailsAvatar>
         <div>
-          <p className="eyebrow">Fiche joueur</p>
+          <Eyebrow>Fiche joueur</Eyebrow>
           <h2>{person.name}</h2>
           <p>
             {person.email || "Partenaire de jeu"}
             {person.isHousehold ? " · Membre de la maison" : ""}
           </p>
         </div>
-      </div>
-      <div className="game-details-stats">
+      </DetailsHeading>
+      <DetailsStats>
         <div>
           <strong>{personPlays.length}</strong>
           <span>partie{personPlays.length > 1 ? "s" : ""}</span>
@@ -357,19 +728,19 @@ export function PersonDetailsPage({
           </strong>
           <span>dernière partie</span>
         </div>
-      </div>
-      <div className="person-details-columns">
-        <section className="details-section">
-          <p className="eyebrow">Historique</p>
+      </DetailsStats>
+      <DetailsColumns>
+        <DetailsSection>
+          <Eyebrow>Historique</Eyebrow>
           <h3>Dernières parties</h3>
           {personPlays.length ? (
-            <div className="details-play-list">
+            <DetailsList>
               {personPlays.slice(0, 8).map((play) => {
                 const won = play.participants.some(
                   (item) => item.personId === person.id && item.isWinner,
                 );
                 return (
-                  <div className="details-play-row" key={play.id}>
+                  <DetailsRow key={play.id}>
                     <strong>
                       {new Intl.DateTimeFormat("fr-FR", {
                         day: "numeric",
@@ -384,7 +755,7 @@ export function PersonDetailsPage({
                       />
                     </span>
                     <small>{play.location}</small>
-                    <em className={!won && !play.groupWon ? "lost" : ""}>
+                    <Result $lost={!won && !play.groupWon}>
                       {play.game.cooperative ? (
                         play.groupWon === true ? (
                           "Victoire du groupe"
@@ -400,28 +771,25 @@ export function PersonDetailsPage({
                       ) : (
                         "Défaite"
                       )}
-                    </em>
-                  </div>
+                    </Result>
+                  </DetailsRow>
                 );
               })}
-            </div>
+            </DetailsList>
           ) : (
-            <p className="details-empty">
-              Aucune partie enregistrée pour le moment.
-            </p>
+            <Empty>Aucune partie enregistrée pour le moment.</Empty>
           )}
-        </section>
-        <div className="person-charts">
-          <section className="details-section">
-            <p className="eyebrow">Répartition</p>
+        </DetailsSection>
+        <Charts>
+          <DetailsSection>
+            <Eyebrow>Répartition</Eyebrow>
             <h3>Jeux les plus joués</h3>
-            <div className="victory-chart-wrap">
-              <div
-                className="victory-chart"
+            <ChartWrap>
+              <Chart
                 style={{ background: `conic-gradient(${gameGradient})` }}
                 aria-label="Répartition des jeux joués"
               />
-              <div className="victory-legend">
+              <Legend>
                 {gameRows.length ? (
                   gameRows.slice(0, 6).map((game, index) => (
                     <div key={game.title}>
@@ -442,21 +810,20 @@ export function PersonDetailsPage({
                     </div>
                   ))
                 ) : (
-                  <p className="details-empty">Aucune partie enregistrée.</p>
+                  <Empty>Aucune partie enregistrée.</Empty>
                 )}
-              </div>
-            </div>
-          </section>
-          <section className="details-section">
-            <p className="eyebrow">Jeux compétitifs</p>
+              </Legend>
+            </ChartWrap>
+          </DetailsSection>
+          <DetailsSection>
+            <Eyebrow>Jeux compétitifs</Eyebrow>
             <h3>Victoires hors coopératif</h3>
-            <div className="victory-chart-wrap">
-              <div
-                className="victory-chart"
+            <ChartWrap>
+              <Chart
                 style={{ background: resultGradient }}
                 aria-label={`${winPercent}% de victoires aux jeux non coopératifs`}
               />
-              <div className="victory-legend">
+              <Legend>
                 <div>
                   <i style={{ backgroundColor: "#436f5b" }} />
                   <span>Victoires</span>
@@ -472,16 +839,16 @@ export function PersonDetailsPage({
                     )}
                   </strong>
                 </div>
-                <p className="chart-caption">
+                <Empty>
                   {nonCooperativePlays.length
                     ? `${winPercent} % de réussite sur ${nonCooperativePlays.length} partie${nonCooperativePlays.length > 1 ? "s" : ""}`
                     : "Aucune partie compétitive enregistrée."}
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </div>
+                </Empty>
+              </Legend>
+            </ChartWrap>
+          </DetailsSection>
+        </Charts>
+      </DetailsColumns>
+    </DetailsPage>
   );
 }

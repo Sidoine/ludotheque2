@@ -1,5 +1,6 @@
 "use client";
 
+import styled from "@emotion/styled";
 import {
   ArrowRight,
   Clock3,
@@ -24,6 +25,679 @@ import { useState } from "react";
 import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar, EmptyState, GameImage, relativeDate } from "./primitives";
 import type { Game, Person, Play } from "./types";
+
+const GameContentPanel = styled.div`
+  min-height: 540px;
+  padding: 22px;
+  @media (max-width: 700px) {
+    padding: 16px;
+  }
+`;
+const GameToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  @media (max-width: 700px) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+`;
+const GameSearch = styled.label`
+  width: min(370px, 40%);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: #929994;
+  background: #faf9f6;
+  &:focus-within {
+    border-color: #a9c0b3;
+    box-shadow: 0 0 0 3px rgba(49, 95, 77, 0.07);
+  }
+  input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    background: transparent;
+    font-size: 11px;
+  }
+  @media (max-width: 700px) {
+    width: 100%;
+  }
+`;
+const GameFilters = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9px;
+  background: #f1f0eb;
+  @media (max-width: 700px) {
+    overflow-x: auto;
+  }
+`;
+const FilterButton = styled.button<{
+  $active: boolean;
+}>`
+  min-height: 31px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  color: ${({ $active }) => ($active ? "var(--forest)" : "var(--muted)")};
+  background: ${({ $active }) => ($active ? "white" : "transparent")};
+  box-shadow: ${({ $active }) =>
+    $active ? "0 2px 8px rgba(30,50,40,.08)" : "none"};
+  font-size: 10px;
+  font-weight: ${({ $active }) => ($active ? 700 : 400)};
+  white-space: nowrap;
+  cursor: pointer;
+  @media (max-width: 700px) {
+    flex: 1;
+  }
+`;
+const GameSort = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+  select {
+    min-height: 33px;
+    padding: 0 9px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink);
+    background: white;
+    font-size: 10px;
+    cursor: pointer;
+  }
+  @media (max-width: 700px) {
+    justify-content: space-between;
+    select {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+`;
+const GamesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  padding-top: 22px;
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 15px;
+  }
+  @media (max-width: 390px) {
+    grid-template-columns: 1fr;
+  }
+`;
+const GameCard = styled.article`
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+  cursor: pointer;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 13px 28px rgba(40, 55, 47, 0.11);
+  }
+  &:hover > div:first-of-type > img {
+    transform: scale(1.025);
+  }
+`;
+const CardVisual = styled.div`
+  position: relative;
+  height: 205px;
+  overflow: hidden;
+  background: #e9e8e1;
+  & > img {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s;
+  }
+  @media (max-width: 700px) {
+    height: 165px;
+  }
+`;
+const CardBadges = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+`;
+const CardPill = styled.span<{
+  $tone: "gold" | "terracotta";
+}>`
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 12px;
+  color: ${({ $tone }) => ($tone === "gold" ? "#806425" : "#974f39")};
+  background: ${({ $tone }) => ($tone === "gold" ? "#f4e8bf" : "#f1ded5")};
+  font-size: 8px;
+  font-weight: 750;
+`;
+const CardMenuWrap = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+`;
+const CardMenuButton = styled.button`
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: #3d4b44;
+  background: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  &:hover,
+  &[aria-expanded="true"] {
+    color: var(--forest);
+    background: white;
+  }
+`;
+const CardMenu = styled.div`
+  position: absolute;
+  top: 34px;
+  right: 0;
+  min-width: 142px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  box-shadow: 0 10px 25px rgba(24, 39, 30, 0.18);
+`;
+const CardMenuItem = styled.button<{
+  $danger?: boolean;
+}>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  color: ${({ $danger }) => ($danger ? "#a33f2b" : "var(--ink)")};
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  &:hover {
+    background: #f0eee7;
+  }
+`;
+const CardBody = styled.div`
+  padding: 15px;
+  @media (max-width: 700px) {
+    padding: 11px;
+  }
+  & > p {
+    height: 15px;
+    overflow: hidden;
+    margin: 5px 0 12px;
+    color: var(--muted);
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+const GameTitleLine = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  h3 {
+    overflow: hidden;
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  a {
+    color: #94a09a;
+  }
+  @media (max-width: 700px) {
+    h3 {
+      font-size: 14px;
+    }
+  }
+`;
+const GameFacts = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding-bottom: 13px;
+  color: #69766f;
+  font-size: 9px;
+  & > span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  @media (max-width: 700px) {
+    & > span:nth-child(2) {
+      display: none;
+    }
+  }
+`;
+const CardBggRating = styled.span`
+  color: #a27a29;
+  font-weight: 700;
+`;
+const CardFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #efede7;
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 7px;
+    color: var(--forest);
+    background: var(--forest-soft);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  @media (max-width: 700px) {
+    justify-content: flex-end;
+  }
+`;
+const OwnerLabel = styled.span`
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #707b75;
+  font-size: 9px;
+  line-height: 1.35;
+  @media (max-width: 700px) {
+    display: none;
+  }
+`;
+const OwnerAvatars = styled.span`
+  display: inline-flex;
+  align-items: center;
+  & > * {
+    border-color: var(--paper);
+    color: #fff;
+    background-color: #20352d !important;
+    filter: none;
+    text-shadow: none;
+  }
+`;
+const GameDetailsShell = styled.div`
+  padding-bottom: 24px;
+`;
+const DetailsToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 25px;
+  & > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  @media (max-width: 700px) {
+    align-items: flex-start;
+    flex-direction: column;
+    & > div {
+      width: 100%;
+    }
+    & > div > button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+`;
+const BackButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  &:hover {
+    color: var(--forest);
+  }
+  svg {
+    transform: rotate(180deg);
+  }
+`;
+const ActionButton = styled.button<{
+  $primary?: boolean;
+}>`
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid
+    ${({ $primary }) => ($primary ? "var(--forest)" : "#d7d5ce")};
+  border-radius: 9px;
+  color: ${({ $primary }) => ($primary ? "white" : "#4e5b55")};
+  background: ${({ $primary }) =>
+    $primary ? "var(--forest)" : "rgba(255,255,255,.72)"};
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+`;
+const DetailHeading = styled.div`
+  display: grid;
+  grid-template-columns: 145px 1fr;
+  align-items: center;
+  gap: 24px;
+  h2 {
+    margin: 5px 0 7px;
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 500;
+  }
+  p:not(:first-child) {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 7px 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: 88px 1fr;
+    gap: 14px;
+    h2 {
+      font-size: 21px;
+    }
+  }
+`;
+const DetailEyebrow = styled.p`
+  margin: 0 0 5px;
+  color: var(--terracotta);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+`;
+const DetailLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  color: var(--forest);
+  font-size: 10px;
+  font-weight: 700;
+`;
+const DetailFacts = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 15px;
+  color: var(--muted);
+  font-size: 13px;
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+`;
+const DetailRating = styled.span`
+  color: var(--ink);
+  font-weight: 700;
+  small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+`;
+const DetailRatingStar = styled.span`
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  strong {
+    position: absolute;
+    color: var(--ink);
+    font-size: 9px;
+    line-height: 1;
+  }
+`;
+const DetailStats = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 22px;
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+const DetailStat = styled.div`
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 9px;
+  background: #edf1ed;
+  strong {
+    display: block;
+    overflow: hidden;
+    color: var(--forest);
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.3;
+  }
+`;
+const DetailColumns = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 18px;
+  margin-top: 25px;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+const DetailSection = styled.section`
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+  h3 {
+    margin: 5px 0 15px;
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+  }
+`;
+const DetailPlayList = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+const DetailPlayRow = styled.div`
+  display: grid;
+  grid-template-columns: 92px 90px minmax(100px, 1fr) minmax(120px, 1.1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 10px 0;
+  border-top: 1px solid #efede7;
+  font-size: 10px;
+  strong {
+    color: var(--ink);
+    font-size: 10px;
+  }
+  span,
+  small {
+    overflow: hidden;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: 76px 1fr;
+    small,
+    em {
+      grid-column: 1 / -1;
+    }
+  }
+`;
+const DetailResult = styled.em<{
+  $lost?: boolean;
+}>`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  color: ${({ $lost }) => ($lost ? "#a33f2b" : "var(--forest)")};
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+const VictoryWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  @media (max-width: 700px) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+`;
+const VictoryChart = styled.div`
+  width: 145px;
+  height: 145px;
+  flex: 0 0 145px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+`;
+const VictoryLegend = styled.div`
+  flex: 1;
+  min-width: 0;
+  & > div {
+    display: grid;
+    grid-template-columns: 9px 1fr auto;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 0;
+    color: var(--muted);
+    font-size: 10px;
+  }
+  & i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  & strong {
+    color: var(--ink);
+  }
+`;
+const DetailEmpty = styled.p`
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+`;
+const LoanForm = styled.form`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  padding: 22px 27px 25px;
+  @media (max-width: 700px) {
+    padding: 19px;
+  }
+`;
+const LoanField = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #56635c;
+  font-size: 9px;
+  font-weight: 750;
+  input,
+  select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 11px;
+    border: 1px solid #dcdad2;
+    border-radius: 8px;
+    outline: 0;
+    color: var(--ink);
+    background: white;
+    font-size: 11px;
+    &:focus {
+      border-color: #91aa9c;
+      box-shadow: 0 0 0 3px rgba(49, 95, 77, 0.07);
+    }
+  }
+  small {
+    color: #a0a5a2;
+    font-weight: 400;
+  }
+`;
+const LoanButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+`;
+const LoanSpinner = styled(Loader2)`
+  animation: loan-spin 1s linear infinite;
+  @keyframes loan-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 function todayString() {
   return new Date().toISOString().slice(0, 10);
@@ -102,17 +776,17 @@ export function GamesView({
   });
 
   return (
-    <div className="content-panel">
-      <div className="toolbar">
-        <label className="search-box">
+    <GameContentPanel>
+      <GameToolbar>
+        <GameSearch>
           <Search size={18} />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Rechercher un jeu, une catégorie…"
           />
-        </label>
-        <div className="filter-tabs">
+        </GameSearch>
+        <GameFilters>
           {(
             [
               ["all", "Tous"],
@@ -121,17 +795,17 @@ export function GamesView({
               ["sale", "À vendre"],
             ] as const
           ).map(([id, label]) => (
-            <button
+            <FilterButton
               key={id}
+              $active={filter === id}
               type="button"
-              className={filter === id ? "active" : ""}
               onClick={() => setFilter(id)}
             >
               {label}
-            </button>
+            </FilterButton>
           ))}
-        </div>
-        <label className="sort-select">
+        </GameFilters>
+        <GameSort>
           <span>Trier par</span>
           <select
             value={sortBy}
@@ -155,13 +829,12 @@ export function GamesView({
             <option value="asc">Croissant</option>
             <option value="desc">Décroissant</option>
           </select>
-        </label>
-      </div>
+        </GameSort>
+      </GameToolbar>
       {sortedGames.length ? (
-        <div className="games-grid">
+        <GamesGrid>
           {sortedGames.map((game) => (
-            <article
-              className="game-card"
+            <GameCard
               key={game.id}
               role="button"
               tabIndex={0}
@@ -173,27 +846,23 @@ export function GamesView({
                 }
               }}
             >
-              <div className="game-card-visual">
-                <GameImage game={game} />
-                <div className="game-card-badges">
+              <CardVisual>
+                <GameImage game={game} variant="card" />
+                <CardBadges>
                   {game.activeLoan && (
-                    <span className="pill pill-gold">Chez nous, à Marc</span>
+                    <CardPill $tone="gold">Chez nous, à Marc</CardPill>
                   )}
                   {game.forSale && (
-                    <span className="pill pill-terracotta">
+                    <CardPill $tone="terracotta">
                       {game.salePrice
                         ? `${Number(game.salePrice)} €`
                         : "À vendre"}
-                    </span>
+                    </CardPill>
                   )}
-                </div>
+                </CardBadges>
                 {canEdit && (
-                  <div
-                    className="game-card-menu-wrap"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <button
-                      className="card-menu"
+                  <CardMenuWrap onClick={(event) => event.stopPropagation()}>
+                    <CardMenuButton
                       type="button"
                       aria-label={`Actions pour ${game.title}`}
                       aria-expanded={openMenuId === game.id}
@@ -204,10 +873,10 @@ export function GamesView({
                       }
                     >
                       <MoreHorizontal size={18} />
-                    </button>
+                    </CardMenuButton>
                     {openMenuId === game.id && (
-                      <div className="game-card-menu">
-                        <button
+                      <CardMenu>
+                        <CardMenuItem
                           type="button"
                           onClick={() => {
                             setOpenMenuId(null);
@@ -215,24 +884,24 @@ export function GamesView({
                           }}
                         >
                           <Pencil size={15} /> Modifier
-                        </button>
-                        <button
+                        </CardMenuItem>
+                        <CardMenuItem
                           type="button"
-                          className="danger"
+                          $danger
                           onClick={() => {
                             setOpenMenuId(null);
                             onDelete(game);
                           }}
                         >
                           <Trash2 size={15} /> Supprimer
-                        </button>
-                      </div>
+                        </CardMenuItem>
+                      </CardMenu>
                     )}
-                  </div>
+                  </CardMenuWrap>
                 )}
-              </div>
-              <div className="game-card-body">
-                <div className="game-title-line">
+              </CardVisual>
+              <CardBody>
+                <GameTitleLine>
                   <h3>{game.title}</h3>
                   {game.bggUrl && (
                     <a
@@ -245,12 +914,12 @@ export function GamesView({
                       <ExternalLink size={15} />
                     </a>
                   )}
-                </div>
+                </GameTitleLine>
                 <p>
                   {game.categories.slice(0, 2).join(" · ") || "Jeu de société"}{" "}
                   {game.year ? `· ${game.year}` : ""}
                 </p>
-                <div className="game-facts">
+                <GameFacts>
                   <span>
                     <Users size={14} /> {game.minPlayers ?? "?"}–
                     {game.maxPlayers ?? "?"}
@@ -263,18 +932,15 @@ export function GamesView({
                     <Dices size={14} /> {game.playCount}
                   </span>
                   {game.bggRating && (
-                    <span
-                      className="card-bgg-rating"
-                      title={`Note BGG ${game.bggRating} sur 10`}
-                    >
+                    <CardBggRating title={`Note BGG ${game.bggRating} sur 10`}>
                       <Star size={14} /> {game.bggRating}
-                    </span>
+                    </CardBggRating>
                   )}
-                </div>
-                <div className="game-card-footer">
-                  <span className="owner-label">
+                </GameFacts>
+                <CardFooter>
+                  <OwnerLabel>
                     {game.ownerships.length ? (
-                      <span className="owner-avatars">
+                      <OwnerAvatars>
                         {game.ownerships.map((item) => (
                           <Avatar
                             key={item.personId}
@@ -283,13 +949,13 @@ export function GamesView({
                             onOpen={() => onOpenPerson(item.person.id)}
                           />
                         ))}
-                      </span>
+                      </OwnerAvatars>
                     ) : (
                       <>
                         <PackageOpen size={15} /> Propriétaire non indiqué
                       </>
                     )}
-                  </span>
+                  </OwnerLabel>
                   {canEdit && (
                     <button
                       type="button"
@@ -301,11 +967,11 @@ export function GamesView({
                       <Plus size={15} /> Partie
                     </button>
                   )}
-                </div>
-              </div>
-            </article>
+                </CardFooter>
+              </CardBody>
+            </GameCard>
           ))}
-        </div>
+        </GamesGrid>
       ) : (
         <EmptyState
           icon={Search}
@@ -313,7 +979,7 @@ export function GamesView({
           text="Essayez un autre mot ou retirez un filtre."
         />
       )}
-    </div>
+    </GameContentPanel>
   );
 }
 
@@ -411,58 +1077,45 @@ export function GameDetailsPage({
     onChanged();
   }
   return (
-    <div className="game-details-page">
-      <div className="game-details-toolbar">
-        <button className="back-button" type="button" onClick={onBack}>
-          <ArrowRight className="back-icon" size={16} /> Ma ludothèque
-        </button>
+    <GameDetailsShell>
+      <DetailsToolbar>
+        <BackButton type="button" onClick={onBack}>
+          <ArrowRight size={16} /> Ma ludothèque
+        </BackButton>
         <div>
           {canEdit && (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={toggleSale}
-            >
+            <ActionButton type="button" onClick={toggleSale}>
               <Tag size={16} />{" "}
               {game.forSale ? "Retirer de la vente" : "Marquer à vendre"}
-            </button>
+            </ActionButton>
           )}
           {canEdit && (
-            <button
-              className="secondary-button"
+            <ActionButton
               type="button"
               onClick={game.activeLoan ? returnGame : () => setLoanModal(true)}
             >
               <HandHeart size={16} />{" "}
               {game.activeLoan ? "Marquer rendu" : "Marquer emprunté"}
-            </button>
+            </ActionButton>
           )}
           {canEdit && (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => onEdit(game)}
-            >
+            <ActionButton type="button" onClick={() => onEdit(game)}>
               <Pencil size={16} /> Modifier
-            </button>
+            </ActionButton>
           )}
           {canEdit && (
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => onPlay(game)}
-            >
+            <ActionButton $primary type="button" onClick={() => onPlay(game)}>
               <Plus size={16} /> Noter une partie
-            </button>
+            </ActionButton>
           )}
         </div>
-      </div>
-      <div className="game-details-heading">
-        <GameImage game={game} className="game-details-image" />
+      </DetailsToolbar>
+      <DetailHeading>
+        <GameImage game={game} variant="detail" />
         <div>
-          <p className="eyebrow">
+          <DetailEyebrow>
             {game.categories.slice(0, 2).join(" · ") || "Jeu de société"}
-          </p>
+          </DetailEyebrow>
           <h2>{game.title}</h2>
           <p>
             {game.year ? `Sorti en ${game.year}` : "Année inconnue"}
@@ -480,16 +1133,11 @@ export function GameDetailsPage({
             </p>
           )}
           {game.bggUrl && (
-            <a
-              className="details-link"
-              href={game.bggUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <DetailLink href={game.bggUrl} target="_blank" rel="noreferrer">
               <ExternalLink size={14} /> Voir sur BoardGameGeek
-            </a>
+            </DetailLink>
           )}
-          <div className="game-details-facts">
+          <DetailFacts>
             <span>
               <Users size={17} /> {game.minPlayers ?? "?"}–
               {game.maxPlayers ?? "?"} joueurs
@@ -505,44 +1153,41 @@ export function GameDetailsPage({
                 : "Catégories non renseignées"}
             </span>
             {game.bggRating && (
-              <span
-                className="bgg-rating"
-                aria-label={`Note BGG ${game.bggRating} sur 10`}
-              >
-                <span className="bgg-rating-star">
+              <DetailRating aria-label={`Note BGG ${game.bggRating} sur 10`}>
+                <DetailRatingStar>
                   <Star size={40} />
                   <strong>{game.bggRating}</strong>
-                </span>
+                </DetailRatingStar>
                 <small>/10 BGG</small>
-              </span>
+              </DetailRating>
             )}
-          </div>
+          </DetailFacts>
         </div>
-      </div>
-      <div className="game-details-stats">
-        <div>
+      </DetailHeading>
+      <DetailStats>
+        <DetailStat>
           <strong>{gamePlays.length}</strong>
           <span>partie{gamePlays.length > 1 ? "s" : ""}</span>
-        </div>
-        <div>
+        </DetailStat>
+        <DetailStat>
           <strong>{averagePlayers}</strong>
           <span>joueurs en moyenne</span>
-        </div>
-        <div>
+        </DetailStat>
+        <DetailStat>
           <strong>{lastPlay ? relativeDate(lastPlay.playedAt) : "—"}</strong>
           <span>dernière partie</span>
-        </div>
-        <div>
+        </DetailStat>
+        <DetailStat>
           <strong>{game.playingTime ? `${game.playingTime} min` : "—"}</strong>
           <span>durée moyenne</span>
-        </div>
-      </div>
-      <div className="game-details-columns">
-        <section className="details-section">
-          <p className="eyebrow">Historique</p>
+        </DetailStat>
+      </DetailStats>
+      <DetailColumns>
+        <DetailSection>
+          <DetailEyebrow>Historique</DetailEyebrow>
           <h3>Dernières parties</h3>
           {gamePlays.length ? (
-            <div className="details-play-list">
+            <DetailPlayList>
               {gamePlays.slice(0, 6).map((play) => {
                 const winners = play.participants
                   .filter((participant) => participant.isWinner)
@@ -565,7 +1210,7 @@ export function GameDetailsPage({
                   "Résultat non noté"
                 );
                 return (
-                  <div className="details-play-row" key={play.id}>
+                  <DetailPlayRow key={play.id}>
                     <strong>
                       {new Intl.DateTimeFormat("fr-FR", {
                         day: "numeric",
@@ -579,29 +1224,26 @@ export function GameDetailsPage({
                         .map((participant) => participant.person.name)
                         .join(", ")}
                     </small>
-                    <em className={play.groupWon === false ? "lost" : ""}>
+                    <DetailResult $lost={play.groupWon === false}>
                       {result}
-                    </em>
-                  </div>
+                    </DetailResult>
+                  </DetailPlayRow>
                 );
               })}
-            </div>
+            </DetailPlayList>
           ) : (
-            <p className="details-empty">
-              Aucune partie enregistrée pour le moment.
-            </p>
+            <DetailEmpty>Aucune partie enregistrée pour le moment.</DetailEmpty>
           )}
-        </section>
-        <section className="details-section victory-section">
-          <p className="eyebrow">Palmarès</p>
+        </DetailSection>
+        <DetailSection>
+          <DetailEyebrow>Palmarès</DetailEyebrow>
           <h3>Victoires par joueur</h3>
-          <div className="victory-chart-wrap">
-            <div
-              className="victory-chart"
+          <VictoryWrap>
+            <VictoryChart
               style={{ background: `conic-gradient(${gradient})` }}
               aria-label="Répartition des victoires par joueur"
             />
-            <div className="victory-legend">
+            <VictoryLegend>
               {victoryRows.length ? (
                 victoryRows.map((player) => (
                   <div key={player.name}>
@@ -611,12 +1253,12 @@ export function GameDetailsPage({
                   </div>
                 ))
               ) : (
-                <p className="details-empty">Aucune victoire enregistrée.</p>
+                <DetailEmpty>Aucune victoire enregistrée.</DetailEmpty>
               )}
-            </div>
-          </div>
-        </section>
-      </div>
+            </VictoryLegend>
+          </VictoryWrap>
+        </DetailSection>
+      </DetailColumns>
       {loanModal && (
         <GameLoanModal
           game={game}
@@ -629,7 +1271,7 @@ export function GameDetailsPage({
           onToast={onToast}
         />
       )}
-    </div>
+    </GameDetailsShell>
   );
 }
 
@@ -681,9 +1323,9 @@ function GameLoanModal({
       subtitle="Gardez la trace de la personne qui vous prête cette boîte."
       onClose={onClose}
     >
-      <form className="modal-form" onSubmit={submit}>
+      <LoanForm onSubmit={submit}>
         <ModalContent>
-          <label className="field">
+          <LoanField>
             <span>Prêté par *</span>
             <select
               value={lenderId}
@@ -695,8 +1337,8 @@ function GameLoanModal({
                 </option>
               ))}
             </select>
-          </label>
-          <label className="field">
+          </LoanField>
+          <LoanField>
             <span>Date d’emprunt *</span>
             <input
               type="date"
@@ -704,8 +1346,8 @@ function GameLoanModal({
               value={borrowedAt}
               onChange={(event) => setBorrowedAt(event.target.value)}
             />
-          </label>
-          <label className="field">
+          </LoanField>
+          <LoanField>
             <span>
               Date de retour prévue <small>facultatif</small>
             </span>
@@ -714,22 +1356,20 @@ function GameLoanModal({
               value={dueAt}
               onChange={(event) => setDueAt(event.target.value)}
             />
-          </label>
+          </LoanField>
         </ModalContent>
         <ModalActions>
-          <button type="button" className="ghost-button" onClick={onClose}>
-            Annuler
-          </button>
-          <button className="primary-button" disabled={saving}>
-            {saving ? (
-              <Loader2 className="spin" size={17} />
-            ) : (
-              <HandHeart size={17} />
-            )}{" "}
-            Enregistrer le prêt
-          </button>
+          <LoanButtons>
+            <ActionButton type="button" onClick={onClose}>
+              Annuler
+            </ActionButton>
+            <ActionButton $primary disabled={saving}>
+              {saving ? <LoanSpinner size={17} /> : <HandHeart size={17} />}{" "}
+              Enregistrer le prêt
+            </ActionButton>
+          </LoanButtons>
         </ModalActions>
-      </form>
+      </LoanForm>
     </Modal>
   );
 }

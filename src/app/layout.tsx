@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import "./globals.css";
+import { EmotionRegistry } from "./emotion-registry";
+import { GlobalStyles } from "./global-styles";
 
 export const metadata: Metadata = {
   title: "Ludothèque — Ma ludothèque",
@@ -16,8 +17,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
-      <body>{children}</body>
+    <html lang="fr" data-scroll-behavior="smooth">
+      <body>
+        <EmotionRegistry>
+          <GlobalStyles />
+          {children}
+        </EmotionRegistry>
+      </body>
     </html>
   );
 }
