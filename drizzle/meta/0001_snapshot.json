@@ -75,12 +75,8 @@
           "name": "game_owners_game_id_games_id_fk",
           "tableFrom": "game_owners",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -88,12 +84,8 @@
           "name": "game_owners_person_id_people_id_fk",
           "tableFrom": "game_owners",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -343,12 +335,8 @@
           "name": "loans_game_id_games_id_fk",
           "tableFrom": "loans",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -356,12 +344,8 @@
           "name": "loans_lender_id_people_id_fk",
           "tableFrom": "loans",
           "tableTo": "people",
-          "columnsFrom": [
-            "lender_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["lender_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -369,12 +353,8 @@
           "name": "loans_borrower_id_people_id_fk",
           "tableFrom": "loans",
           "tableTo": "people",
-          "columnsFrom": [
-            "borrower_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["borrower_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -538,12 +518,8 @@
           "name": "play_participants_play_id_plays_id_fk",
           "tableFrom": "play_participants",
           "tableTo": "plays",
-          "columnsFrom": [
-            "play_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["play_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -551,12 +527,8 @@
           "name": "play_participants_person_id_people_id_fk",
           "tableFrom": "play_participants",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -664,12 +636,8 @@
           "name": "plays_game_id_games_id_fk",
           "tableFrom": "plays",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
