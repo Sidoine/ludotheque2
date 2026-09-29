@@ -3,6 +3,8 @@
 import styled from "@emotion/styled";
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Dices,
   ExternalLink,
@@ -381,6 +383,34 @@ const DetailsToolbar = styled.div`
       flex: 1;
       justify-content: center;
     }
+    .game-navigation button {
+      flex: 0 0 38px;
+    }
+  }
+`;
+const DetailsNavigation = styled.div`
+  align-items: center;
+  gap: 5px !important;
+`;
+const DetailsNavigationButton = styled.button`
+  width: 38px;
+  height: 38px;
+  display: grid;
+  flex: 0 0 38px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d7d5ce;
+  border-radius: 9px;
+  color: #4e5b55;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    color: var(--forest);
+    border-color: #a9c0b3;
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 const BackButton = styled.button`
@@ -702,7 +732,8 @@ const LoanSpinner = styled(Loader2)`
 function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
-type GameSort =
+export type GameFilter = "all" | "mine" | "borrowed" | "sale" | "noBgg";
+export type GameSort =
   | "title"
   | "lastPlayed"
   | "playingTime"
@@ -710,33 +741,18 @@ type GameSort =
   | "bggRating"
   | "minPlayers"
   | "maxPlayers";
-type SortDirection = "asc" | "desc";
+export type SortDirection = "asc" | "desc";
+export type GamesNavigationState = {
+  search: string;
+  filter: GameFilter;
+  sortBy: GameSort;
+  sortDirection: SortDirection;
+};
 
-export function GamesView({
-  games,
-  onPlay,
-  onOpenGame,
-  onOpenPerson,
-  canEdit,
-  onEdit,
-  onDelete,
-}: {
-  games: Game[];
-  onPlay: (game: Game) => void;
-  onOpenGame: (gameId: number) => void;
-  onOpenPerson: (personId: number) => void;
-  canEdit: boolean;
-  onEdit: (game: Game) => void;
-  onDelete: (game: Game) => void;
-}) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "mine" | "borrowed" | "sale">(
-    "all",
-  );
-  const [sortBy, setSortBy] = useState<GameSort>("title");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-
+export function getSortedGames(
+  games: Game[],
+  { search, filter, sortBy, sortDirection }: GamesNavigationState,
+) {
   const filtered = games.filter((game) => {
     const matches =
       game.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -746,9 +762,11 @@ export function GamesView({
       return game.ownerships.some((item) => item.person.isHousehold);
     if (filter === "borrowed") return Boolean(game.activeLoan);
     if (filter === "sale") return game.forSale;
+    if (filter === "noBgg") return !game.bggUrl;
     return true;
   });
-  const sortedGames = [...filtered].sort((first, second) => {
+
+  return [...filtered].sort((first, second) => {
     const direction = sortDirection === "asc" ? 1 : -1;
     if (sortBy === "title")
       return direction * first.title.localeCompare(second.title, "fr");
@@ -774,6 +792,46 @@ export function GamesView({
       difference || direction * first.title.localeCompare(second.title, "fr")
     );
   });
+}
+
+export function GamesView({
+  games,
+  initialNavigation,
+  onPlay,
+  onOpenGame,
+  onOpenPerson,
+  canEdit,
+  onEdit,
+  onDelete,
+}: {
+  games: Game[];
+  initialNavigation?: GamesNavigationState;
+  onPlay: (game: Game) => void;
+  onOpenGame: (gameId: number, navigation?: GamesNavigationState) => void;
+  onOpenPerson: (personId: number) => void;
+  canEdit: boolean;
+  onEdit: (game: Game) => void;
+  onDelete: (game: Game) => void;
+}) {
+  const [search, setSearch] = useState(initialNavigation?.search ?? "");
+  const [filter, setFilter] = useState<GameFilter>(
+    initialNavigation?.filter ?? "all",
+  );
+  const [sortBy, setSortBy] = useState<GameSort>(
+    initialNavigation?.sortBy ?? "title",
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    initialNavigation?.sortDirection ?? "asc",
+  );
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  const navigation: GamesNavigationState = {
+    search,
+    filter,
+    sortBy,
+    sortDirection,
+  };
+  const sortedGames = getSortedGames(games, navigation);
 
   return (
     <GameContentPanel>
@@ -793,6 +851,7 @@ export function GamesView({
               ["mine", "À nous"],
               ["borrowed", "Empruntés"],
               ["sale", "À vendre"],
+              ["noBgg", "Sans lien BGG"],
             ] as const
           ).map(([id, label]) => (
             <FilterButton
@@ -838,11 +897,11 @@ export function GamesView({
               key={game.id}
               role="button"
               tabIndex={0}
-              onClick={() => onOpenGame(game.id)}
+              onClick={() => onOpenGame(game.id, navigation)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  onOpenGame(game.id);
+                  onOpenGame(game.id, navigation);
                 }
               }}
             >
@@ -985,20 +1044,26 @@ export function GamesView({
 
 export function GameDetailsPage({
   game,
+  previousGame,
+  nextGame,
   people,
   plays,
   canEdit,
   onBack,
+  onNavigateGame,
   onEdit,
   onPlay,
   onToast,
   onChanged,
 }: {
   game: Game;
+  previousGame?: Game;
+  nextGame?: Game;
   people: Person[];
   plays: Play[];
   canEdit: boolean;
   onBack: () => void;
+  onNavigateGame: (gameId: number) => void;
   onEdit: (game: Game) => void;
   onPlay: (game: Game) => void;
   onToast: (message: string, error?: boolean) => void;
@@ -1082,6 +1147,35 @@ export function GameDetailsPage({
         <BackButton type="button" onClick={onBack}>
           <ArrowRight size={16} /> Ma ludothèque
         </BackButton>
+        <DetailsNavigation
+          className="game-navigation"
+          aria-label="Navigation entre les jeux"
+        >
+          <DetailsNavigationButton
+            type="button"
+            aria-label={
+              previousGame
+                ? `Jeu précédent : ${previousGame.title}`
+                : "Aucun jeu précédent"
+            }
+            title={previousGame?.title ?? "Aucun jeu précédent"}
+            disabled={!previousGame}
+            onClick={() => previousGame && onNavigateGame(previousGame.id)}
+          >
+            <ChevronLeft size={18} />
+          </DetailsNavigationButton>
+          <DetailsNavigationButton
+            type="button"
+            aria-label={
+              nextGame ? `Jeu suivant : ${nextGame.title}` : "Aucun jeu suivant"
+            }
+            title={nextGame?.title ?? "Aucun jeu suivant"}
+            disabled={!nextGame}
+            onClick={() => nextGame && onNavigateGame(nextGame.id)}
+          >
+            <ChevronRight size={18} />
+          </DetailsNavigationButton>
+        </DetailsNavigation>
         <div>
           {canEdit && (
             <ActionButton type="button" onClick={toggleSale}>

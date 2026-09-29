@@ -20,11 +20,18 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardData } from "@/lib/data";
 import { DashboardView } from "./meeple/dashboard";
-import { GameDetailsPage, GamesView } from "./meeple/library";
+import {
+  GameDetailsPage,
+  type GameFilter,
+  type GameSort,
+  type GamesNavigationState,
+  GamesView,
+  getSortedGames,
+} from "./meeple/library";
 import { GameModal, LoginModal, PersonModal, PlayModal } from "./meeple/modals";
 import { Avatar } from "./meeple/primitives";
 import { ImportView, LoansView, SaleView, StatsView } from "./meeple/secondary";
@@ -32,6 +39,17 @@ import { PeopleView, PersonDetailsPage, PlaysView } from "./meeple/social";
 import type { Game, Person, Play, View } from "./meeple/types";
 
 type IconType = typeof LayoutDashboard;
+
+function gamesQuery(navigation: GamesNavigationState) {
+  const params = new URLSearchParams();
+  if (navigation.search) params.set("q", navigation.search);
+  if (navigation.filter !== "all") params.set("filter", navigation.filter);
+  if (navigation.sortBy !== "title") params.set("sort", navigation.sortBy);
+  if (navigation.sortDirection !== "asc")
+    params.set("direction", navigation.sortDirection);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
 
 const AppShell = styled.div`
   min-height: 100vh;
@@ -473,12 +491,41 @@ const pageTitles: Record<View, { title: string; subtitle: string }> = {
 export function MeepleHouse({ data }: { data: DashboardData }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const pathSegments = pathname.split("/").filter(Boolean);
   const pathView = pathSegments[0];
   const parsedDetailsId = Number(pathSegments[1]);
   const detailsId = Number.isInteger(parsedDetailsId) ? parsedDetailsId : null;
   const view: View =
     pathView && pathView in pageTitles ? (pathView as View) : "dashboard";
+  const filterParam = searchParams.get("filter");
+  const sortParam = searchParams.get("sort");
+  const navigationState: GamesNavigationState = {
+    search: searchParams.get("q") ?? "",
+    filter: (["all", "mine", "borrowed", "sale", "noBgg"] as string[]).includes(
+      filterParam ?? "all",
+    )
+      ? ((filterParam as GameFilter) ?? "all")
+      : "all",
+    sortBy: (
+      [
+        "title",
+        "lastPlayed",
+        "playingTime",
+        "complexity",
+        "bggRating",
+        "minPlayers",
+        "maxPlayers",
+      ] as string[]
+    ).includes(sortParam ?? "title")
+      ? ((sortParam as GameSort) ?? "title")
+      : "title",
+    sortDirection: searchParams.get("direction") === "desc" ? "desc" : "asc",
+  };
+  const navigationGames = getSortedGames(data.games, navigationState);
+  const currentNavigationIndex = navigationGames.findIndex(
+    (game) => game.id === detailsId,
+  );
   const [gameModal, setGameModal] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | undefined>();
   const [playModal, setPlayModal] = useState(false);
@@ -547,11 +594,16 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
     setSelectedGame(game);
     setPlayModal(true);
   }
-  function openGameDetails(gameId: number) {
+  function openGames(navigation: GamesNavigationState) {
+    setSidebarOpen(false);
+    router.push(`/games${gamesQuery(navigation)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function openGameDetails(gameId: number, navigation?: GamesNavigationState) {
     const game = data.games.find((item) => item.id === gameId);
     if (!game) return;
     setSidebarOpen(false);
-    router.push(`/games/${gameId}`);
+    router.push(`/games/${gameId}${navigation ? gamesQuery(navigation) : ""}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function openPersonDetails(personId: number) {
@@ -772,10 +824,24 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
           ) : detailsGame ? (
             <GameDetailsPage
               game={detailsGame}
+              previousGame={
+                currentNavigationIndex > 0
+                  ? navigationGames[currentNavigationIndex - 1]
+                  : undefined
+              }
+              nextGame={
+                currentNavigationIndex >= 0 &&
+                currentNavigationIndex < navigationGames.length - 1
+                  ? navigationGames[currentNavigationIndex + 1]
+                  : undefined
+              }
               people={data.people}
               plays={data.plays}
               canEdit={isAdmin}
-              onBack={() => navigate("games")}
+              onBack={() => openGames(navigationState)}
+              onNavigateGame={(gameId) =>
+                openGameDetails(gameId, navigationState)
+              }
               onEdit={(game) => {
                 setEditingGame(game);
                 setGameModal(true);
@@ -796,6 +862,7 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
           ) : view === "games" ? (
             <GamesView
               games={data.games}
+              initialNavigation={navigationState}
               onPlay={openPlay}
               onOpenGame={openGameDetails}
               onOpenPerson={openPersonDetails}
