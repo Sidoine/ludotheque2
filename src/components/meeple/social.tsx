@@ -9,7 +9,6 @@ import {
   Trophy,
   UserPlus,
 } from "lucide-react";
-import { useState } from "react";
 import {
   Avatar,
   AvatarStack,
@@ -143,34 +142,16 @@ export function PeopleView({
   plays,
   onAdd,
   onEdit,
-  onOpenGame,
+  onOpenPerson,
   canEdit,
 }: {
   people: Person[];
   plays: Play[];
   onAdd: () => void;
   onEdit: (person: Person) => void;
-  onOpenGame: (gameId: number) => void;
+  onOpenPerson: (personId: number) => void;
   canEdit: boolean;
 }) {
-  const [detailsPerson, setDetailsPerson] = useState<Person | undefined>();
-  function editPerson(person: Person) {
-    setDetailsPerson(undefined);
-    onEdit(person);
-  }
-
-  if (detailsPerson)
-    return (
-      <PersonDetailsPage
-        person={detailsPerson}
-        plays={plays}
-        canEdit={canEdit}
-        onOpenGame={onOpenGame}
-        onBack={() => setDetailsPerson(undefined)}
-        onEdit={editPerson}
-      />
-    );
-
   return (
     <div className="content-panel">
       <div className="people-intro">
@@ -200,11 +181,11 @@ export function PeopleView({
               key={person.id}
               role="button"
               tabIndex={0}
-              onClick={() => setDetailsPerson(person)}
+              onClick={() => onOpenPerson(person.id)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  setDetailsPerson(person);
+                  onOpenPerson(person.id);
                 }
               }}
             >
@@ -223,7 +204,7 @@ export function PeopleView({
                   aria-label={`Modifier ${person.name}`}
                   onClick={(event) => {
                     event.stopPropagation();
-                    editPerson(person);
+                    onEdit(person);
                   }}
                 >
                   <Pencil size={15} />

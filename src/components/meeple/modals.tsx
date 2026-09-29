@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
-import { Modal } from "./modal";
+import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar } from "./primitives";
 import type { Game, Person, Play } from "./types";
 export function LoginModal({
@@ -53,11 +53,13 @@ export function LoginModal({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
-        <label className="field">
-          <span>Mot de passe</span>
-          <input autoFocus required name="password" type="password" />
-        </label>
-        <div className="modal-actions">
+        <ModalContent>
+          <label className="field">
+            <span>Mot de passe</span>
+            <input autoFocus required name="password" type="password" />
+          </label>
+        </ModalContent>
+        <ModalActions>
           <button type="button" className="ghost-button" onClick={onClose}>
             Annuler
           </button>
@@ -69,7 +71,7 @@ export function LoginModal({
             )}{" "}
             Se connecter
           </button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );
@@ -294,192 +296,198 @@ export function GameModal({
       wide
     >
       <form className="modal-form" onSubmit={submit}>
-        <div className="bgg-helper">
-          <div className="bgg-link-row">
-            <span>
-              <Link2 size={19} />
-            </span>
-            <label>
-              <b>Lien BoardGameGeek</b>
-              <small>
-                Les informations peuvent être préremplies automatiquement.
-              </small>
+        <ModalContent>
+          <div className="bgg-helper">
+            <div className="bgg-link-row">
+              <span>
+                <Link2 size={19} />
+              </span>
+              <label>
+                <b>Lien BoardGameGeek</b>
+                <small>
+                  Les informations peuvent être préremplies automatiquement.
+                </small>
+                <input
+                  value={form.bggUrl}
+                  onChange={(event) => update("bggUrl", event.target.value)}
+                  placeholder="https://boardgamegeek.com/boardgame/…"
+                />
+              </label>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={fetchBgg}
+                disabled={loadingBgg}
+              >
+                {loadingBgg ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  <Sparkles size={16} />
+                )}{" "}
+                Récupérer
+              </button>
+            </div>
+            <div className="bgg-search-helper">
+              <div>
+                <b>Ou rechercher par nom</b>
+                <small>Utilise le nom saisi dans la fiche.</small>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={searchBgg}
+                disabled={searchingBgg}
+              >
+                {searchingBgg ? (
+                  <Loader2 className="spin" size={16} />
+                ) : (
+                  <Search size={16} />
+                )}{" "}
+                {searchingBgg ? "Recherche…" : "Rechercher"}
+              </button>
+            </div>
+            {bggResults.length > 0 && (
+              <div className="bgg-results" aria-label="Résultats BoardGameGeek">
+                {bggResults.map((result) => (
+                  <button
+                    type="button"
+                    key={result.id}
+                    onClick={() => selectBggResult(result.id)}
+                    disabled={loadingBgg}
+                  >
+                    <span>{result.name}</span>
+                    {result.year && <small>{result.year}</small>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="form-grid two">
+            <label className="field span-2">
+              <span>Nom du jeu *</span>
               <input
-                value={form.bggUrl}
-                onChange={(event) => update("bggUrl", event.target.value)}
-                placeholder="https://boardgamegeek.com/boardgame/…"
+                required
+                value={form.title}
+                onChange={(event) => update("title", event.target.value)}
+                placeholder="Ex. Harmonies"
               />
             </label>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={fetchBgg}
-              disabled={loadingBgg}
-            >
-              {loadingBgg ? (
-                <Loader2 className="spin" size={16} />
-              ) : (
-                <Sparkles size={16} />
-              )}{" "}
-              Récupérer
-            </button>
-          </div>
-          <div className="bgg-search-helper">
-            <div>
-              <b>Ou rechercher par nom</b>
-              <small>Utilise le nom saisi dans la fiche.</small>
+            <div className="field span-2">
+              <span>Image de couverture</span>
+              <div className="cover-upload">
+                <label className="cover-upload-button" htmlFor="game-cover">
+                  <Upload size={16} /> Importer une couverture
+                </label>
+                <input
+                  id="game-cover"
+                  className="cover-upload-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(event) =>
+                    setCoverFile(event.target.files?.[0] ?? null)
+                  }
+                />
+                {coverFile ? (
+                  <small>{coverFile.name}</small>
+                ) : (
+                  <small>JPG, PNG, WEBP ou GIF · 5 Mo maximum</small>
+                )}
+              </div>
+              {coverPreview && (
+                <img
+                  className="cover-upload-preview"
+                  src={coverPreview}
+                  alt="Prévisualisation de la couverture"
+                />
+              )}
             </div>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={searchBgg}
-              disabled={searchingBgg}
-            >
-              {searchingBgg ? (
-                <Loader2 className="spin" size={16} />
-              ) : (
-                <Search size={16} />
-              )}{" "}
-              {searchingBgg ? "Recherche…" : "Rechercher"}
-            </button>
+            <label className="field">
+              <span>Année</span>
+              <input
+                type="number"
+                value={form.year}
+                onChange={(event) => update("year", event.target.value)}
+                placeholder="2024"
+              />
+            </label>
+            <label className="field">
+              <span>Durée moyenne</span>
+              <div className="input-suffix">
+                <input
+                  type="number"
+                  value={form.playingTime}
+                  onChange={(event) =>
+                    update("playingTime", event.target.value)
+                  }
+                  placeholder="45"
+                />
+                <i>min</i>
+              </div>
+            </label>
+            <label className="field">
+              <span>Joueurs min.</span>
+              <input
+                type="number"
+                min="1"
+                value={form.minPlayers}
+                onChange={(event) => update("minPlayers", event.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>Joueurs max.</span>
+              <input
+                type="number"
+                min="1"
+                value={form.maxPlayers}
+                onChange={(event) => update("maxPlayers", event.target.value)}
+              />
+            </label>
+            <label className="field span-2">
+              <span>Catégories</span>
+              <input
+                value={form.categories}
+                onChange={(event) => update("categories", event.target.value)}
+                placeholder="Stratégie, Cartes, Famille…"
+              />
+            </label>
           </div>
-          {bggResults.length > 0 && (
-            <div className="bgg-results" aria-label="Résultats BoardGameGeek">
-              {bggResults.map((result) => (
+          <fieldset className="choice-field">
+            <legend>
+              Propriétaires <small>Plusieurs choix possibles</small>
+            </legend>
+            <div className="person-choices owners">
+              {people.map((person) => (
                 <button
                   type="button"
-                  key={result.id}
-                  onClick={() => selectBggResult(result.id)}
-                  disabled={loadingBgg}
+                  className={
+                    form.ownerIds.includes(person.id) ? "selected" : ""
+                  }
+                  key={person.id}
+                  onClick={() => toggleOwner(person.id)}
                 >
-                  <span>{result.name}</span>
-                  {result.year && <small>{result.year}</small>}
+                  <Avatar person={person} small /> {person.name}
+                  <Check size={14} />
                 </button>
               ))}
             </div>
-          )}
-        </div>
-        <div className="form-grid two">
-          <label className="field span-2">
-            <span>Nom du jeu *</span>
+          </fieldset>
+          <label className="switch-line">
             <input
-              required
-              value={form.title}
-              onChange={(event) => update("title", event.target.value)}
-              placeholder="Ex. Harmonies"
+              type="checkbox"
+              checked={form.cooperative}
+              onChange={(event) => update("cooperative", event.target.checked)}
             />
-          </label>
-          <div className="field span-2">
-            <span>Image de couverture</span>
-            <div className="cover-upload">
-              <label className="cover-upload-button" htmlFor="game-cover">
-                <Upload size={16} /> Importer une couverture
-              </label>
-              <input
-                id="game-cover"
-                className="cover-upload-input"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={(event) =>
-                  setCoverFile(event.target.files?.[0] ?? null)
-                }
-              />
-              {coverFile ? (
-                <small>{coverFile.name}</small>
-              ) : (
-                <small>JPG, PNG, WEBP ou GIF · 5 Mo maximum</small>
-              )}
-            </div>
-            {coverPreview && (
-              <img
-                className="cover-upload-preview"
-                src={coverPreview}
-                alt="Prévisualisation de la couverture"
-              />
-            )}
-          </div>
-          <label className="field">
-            <span>Année</span>
-            <input
-              type="number"
-              value={form.year}
-              onChange={(event) => update("year", event.target.value)}
-              placeholder="2024"
-            />
-          </label>
-          <label className="field">
-            <span>Durée moyenne</span>
-            <div className="input-suffix">
-              <input
-                type="number"
-                value={form.playingTime}
-                onChange={(event) => update("playingTime", event.target.value)}
-                placeholder="45"
-              />
-              <i>min</i>
+            <span>
+              <Check size={13} />
+            </span>
+            <div>
+              <b>Jeu coopératif</b>
+              <small>Le résultat sera enregistré pour tout le groupe.</small>
             </div>
           </label>
-          <label className="field">
-            <span>Joueurs min.</span>
-            <input
-              type="number"
-              min="1"
-              value={form.minPlayers}
-              onChange={(event) => update("minPlayers", event.target.value)}
-            />
-          </label>
-          <label className="field">
-            <span>Joueurs max.</span>
-            <input
-              type="number"
-              min="1"
-              value={form.maxPlayers}
-              onChange={(event) => update("maxPlayers", event.target.value)}
-            />
-          </label>
-          <label className="field span-2">
-            <span>Catégories</span>
-            <input
-              value={form.categories}
-              onChange={(event) => update("categories", event.target.value)}
-              placeholder="Stratégie, Cartes, Famille…"
-            />
-          </label>
-        </div>
-        <fieldset className="choice-field">
-          <legend>
-            Propriétaires <small>Plusieurs choix possibles</small>
-          </legend>
-          <div className="person-choices owners">
-            {people.map((person) => (
-              <button
-                type="button"
-                className={form.ownerIds.includes(person.id) ? "selected" : ""}
-                key={person.id}
-                onClick={() => toggleOwner(person.id)}
-              >
-                <Avatar person={person} small /> {person.name}
-                <Check size={14} />
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <label className="switch-line">
-          <input
-            type="checkbox"
-            checked={form.cooperative}
-            onChange={(event) => update("cooperative", event.target.checked)}
-          />
-          <span>
-            <Check size={13} />
-          </span>
-          <div>
-            <b>Jeu coopératif</b>
-            <small>Le résultat sera enregistré pour tout le groupe.</small>
-          </div>
-        </label>
-        <input type="hidden" name="bggId" value={form.bggId} />
-        <div className="modal-actions">
+          <input type="hidden" name="bggId" value={form.bggId} />
+        </ModalContent>
+        <ModalActions>
           <button type="button" className="ghost-button" onClick={onClose}>
             Annuler
           </button>
@@ -495,7 +503,7 @@ export function GameModal({
               ? "Enregistrer les modifications"
               : "Ajouter à la ludothèque"}
           </button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );
@@ -645,118 +653,122 @@ export function PlayModal({
       wide
     >
       <form className="modal-form" onSubmit={(event) => submit(event, false)}>
-        <div className="form-grid two">
-          <label className="field span-2">
-            <span>Jeu *</span>
-            <select
-              value={gameId}
-              onChange={(event) => {
-                setGameId(Number(event.target.value));
-                setWinners(new Set());
-                setGroupWon(null);
-              }}
-            >
-              {games.map((game) => (
-                <option key={game.id} value={game.id}>
-                  {game.title}
-                </option>
+        <ModalContent>
+          <div className="form-grid two">
+            <label className="field span-2">
+              <span>Jeu *</span>
+              <select
+                value={gameId}
+                onChange={(event) => {
+                  setGameId(Number(event.target.value));
+                  setWinners(new Set());
+                  setGroupWon(null);
+                }}
+              >
+                {games.map((game) => (
+                  <option key={game.id} value={game.id}>
+                    {game.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Date *</span>
+              <input
+                name="date"
+                type="date"
+                required
+                defaultValue={defaults.date}
+              />
+            </label>
+            <label className="field">
+              <span>Heure</span>
+              <input name="time" type="time" defaultValue={defaults.time} />
+            </label>
+            <label className="field span-2">
+              <span>Lieu *</span>
+              <div className="input-icon">
+                <MapPin size={16} />
+                <input
+                  name="location"
+                  required
+                  defaultValue={defaults.location}
+                  placeholder="À la maison, chez Marc…"
+                />
+              </div>
+            </label>
+          </div>
+          <fieldset className="choice-field">
+            <legend>Participants *</legend>
+            <div className="person-choices">
+              {people.map((person) => (
+                <button
+                  type="button"
+                  className={participants.has(person.id) ? "selected" : ""}
+                  key={person.id}
+                  onClick={() =>
+                    toggle(setParticipants, participants, person.id)
+                  }
+                >
+                  <Avatar person={person} small /> {person.name}
+                  <Check size={14} />
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </fieldset>
+          {selectedGame?.cooperative ? (
+            <fieldset className="choice-field">
+              <legend>Résultat du groupe</legend>
+              <div className="result-choice">
+                <button
+                  type="button"
+                  className={groupWon === true ? "selected win" : ""}
+                  onClick={() => setGroupWon(true)}
+                >
+                  <Trophy size={17} /> Victoire
+                </button>
+                <button
+                  type="button"
+                  className={groupWon === false ? "selected lose" : ""}
+                  onClick={() => setGroupWon(false)}
+                >
+                  <X size={17} /> Défaite
+                </button>
+              </div>
+            </fieldset>
+          ) : (
+            <fieldset className="choice-field">
+              <legend>
+                Gagnant·e·s <small>Plusieurs choix possibles</small>
+              </legend>
+              <div className="person-choices winners">
+                {people
+                  .filter((person) => participants.has(person.id))
+                  .map((person) => (
+                    <button
+                      type="button"
+                      className={winners.has(person.id) ? "selected" : ""}
+                      key={person.id}
+                      onClick={() => toggle(setWinners, winners, person.id)}
+                    >
+                      <Trophy size={14} /> {person.name}
+                      <Check size={14} />
+                    </button>
+                  ))}
+              </div>
+            </fieldset>
+          )}
           <label className="field">
-            <span>Date *</span>
-            <input
-              name="date"
-              type="date"
-              required
-              defaultValue={defaults.date}
+            <span>Notes de partie</span>
+            <textarea
+              name="notes"
+              rows={3}
+              defaultValue={initialPlay?.notes ?? ""}
+              placeholder="Étape de la campagne, scénario, moments mémorables…"
             />
           </label>
-          <label className="field">
-            <span>Heure</span>
-            <input name="time" type="time" defaultValue={defaults.time} />
-          </label>
-          <label className="field span-2">
-            <span>Lieu *</span>
-            <div className="input-icon">
-              <MapPin size={16} />
-              <input
-                name="location"
-                required
-                defaultValue={defaults.location}
-                placeholder="À la maison, chez Marc…"
-              />
-            </div>
-          </label>
-        </div>
-        <fieldset className="choice-field">
-          <legend>Participants *</legend>
-          <div className="person-choices">
-            {people.map((person) => (
-              <button
-                type="button"
-                className={participants.has(person.id) ? "selected" : ""}
-                key={person.id}
-                onClick={() => toggle(setParticipants, participants, person.id)}
-              >
-                <Avatar person={person} small /> {person.name}
-                <Check size={14} />
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        {selectedGame?.cooperative ? (
-          <fieldset className="choice-field">
-            <legend>Résultat du groupe</legend>
-            <div className="result-choice">
-              <button
-                type="button"
-                className={groupWon === true ? "selected win" : ""}
-                onClick={() => setGroupWon(true)}
-              >
-                <Trophy size={17} /> Victoire
-              </button>
-              <button
-                type="button"
-                className={groupWon === false ? "selected lose" : ""}
-                onClick={() => setGroupWon(false)}
-              >
-                <X size={17} /> Défaite
-              </button>
-            </div>
-          </fieldset>
-        ) : (
-          <fieldset className="choice-field">
-            <legend>
-              Gagnant·e·s <small>Plusieurs choix possibles</small>
-            </legend>
-            <div className="person-choices winners">
-              {people
-                .filter((person) => participants.has(person.id))
-                .map((person) => (
-                  <button
-                    type="button"
-                    className={winners.has(person.id) ? "selected" : ""}
-                    key={person.id}
-                    onClick={() => toggle(setWinners, winners, person.id)}
-                  >
-                    <Trophy size={14} /> {person.name}
-                    <Check size={14} />
-                  </button>
-                ))}
-            </div>
-          </fieldset>
-        )}
-        <label className="field">
-          <span>Notes de partie</span>
-          <textarea
-            name="notes"
-            rows={3}
-            defaultValue={initialPlay?.notes ?? ""}
-            placeholder="Étape de la campagne, scénario, moments mémorables…"
-          />
-        </label>
-        <div className="modal-actions split">
+        </ModalContent>
+        <ModalActions split>
           <button type="button" className="ghost-button" onClick={onClose}>
             Annuler
           </button>
@@ -793,7 +805,7 @@ export function PlayModal({
               {initialPlay ? "Enregistrer les modifications" : "Enregistrer"}
             </button>
           </div>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );
@@ -841,44 +853,46 @@ export function PersonModal({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
-        <label className="field">
-          <span>Prénom ou nom *</span>
-          <input
-            autoFocus
-            required
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Ex. Camille"
-          />
-        </label>
-        <label className="field">
-          <span>
-            Email <small>facultatif</small>
-          </span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="camille@exemple.com"
-          />
-        </label>
-        <label className="switch-line">
-          <input
-            type="checkbox"
-            checked={isHousehold}
-            onChange={(event) => setIsHousehold(event.target.checked)}
-          />
-          <span>
-            <Check size={13} />
-          </span>
-          <div>
-            <b>Membre de la maison</b>
-            <small>
-              Cette personne peut posséder les jeux de votre collection.
-            </small>
-          </div>
-        </label>
-        <div className="modal-actions">
+        <ModalContent>
+          <label className="field">
+            <span>Prénom ou nom *</span>
+            <input
+              autoFocus
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Ex. Camille"
+            />
+          </label>
+          <label className="field">
+            <span>
+              Email <small>facultatif</small>
+            </span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="camille@exemple.com"
+            />
+          </label>
+          <label className="switch-line">
+            <input
+              type="checkbox"
+              checked={isHousehold}
+              onChange={(event) => setIsHousehold(event.target.checked)}
+            />
+            <span>
+              <Check size={13} />
+            </span>
+            <div>
+              <b>Membre de la maison</b>
+              <small>
+                Cette personne peut posséder les jeux de votre collection.
+              </small>
+            </div>
+          </label>
+        </ModalContent>
+        <ModalActions>
           <button type="button" className="ghost-button" onClick={onClose}>
             Annuler
           </button>
@@ -892,7 +906,7 @@ export function PersonModal({
             )}{" "}
             {editingPerson ? "Enregistrer" : "Ajouter"}
           </button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

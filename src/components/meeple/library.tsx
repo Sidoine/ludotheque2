@@ -20,8 +20,8 @@ import {
   Users,
 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
-import { Modal } from "./modal";
+import { useState } from "react";
+import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar, EmptyState, GameImage, relativeDate } from "./primitives";
 import type { Game, Person, Play } from "./types";
 
@@ -40,26 +40,20 @@ type SortDirection = "asc" | "desc";
 
 export function GamesView({
   games,
-  people,
-  plays,
   onPlay,
+  onOpenGame,
   onOpenPerson,
   canEdit,
   onEdit,
   onDelete,
-  onToast,
-  onChanged,
 }: {
   games: Game[];
-  people: Person[];
-  plays: Play[];
   onPlay: (game: Game) => void;
+  onOpenGame: (gameId: number) => void;
   onOpenPerson: (personId: number) => void;
   canEdit: boolean;
   onEdit: (game: Game) => void;
   onDelete: (game: Game) => void;
-  onToast: (message: string, error?: boolean) => void;
-  onChanged: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "mine" | "borrowed" | "sale">(
@@ -68,14 +62,6 @@ export function GamesView({
   const [sortBy, setSortBy] = useState<GameSort>("title");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [detailsGame, setDetailsGame] = useState<Game | undefined>();
-  useEffect(() => {
-    if (!detailsGame) return;
-    const refreshedGame = games.find((game) => game.id === detailsGame.id);
-    if (refreshedGame && refreshedGame !== detailsGame) {
-      setDetailsGame(refreshedGame);
-    }
-  }, [detailsGame, games]);
 
   const filtered = games.filter((game) => {
     const matches =
@@ -114,23 +100,6 @@ export function GamesView({
       difference || direction * first.title.localeCompare(second.title, "fr")
     );
   });
-
-  if (detailsGame)
-    return (
-      <GameDetailsPage
-        game={detailsGame}
-        people={people}
-        plays={plays}
-        canEdit={canEdit}
-        onBack={() => setDetailsGame(undefined)}
-        onEdit={onEdit}
-        onPlay={onPlay}
-        onToast={onToast}
-        onChanged={() => {
-          onChanged();
-        }}
-      />
-    );
 
   return (
     <div className="content-panel">
@@ -196,11 +165,11 @@ export function GamesView({
               key={game.id}
               role="button"
               tabIndex={0}
-              onClick={() => setDetailsGame(game)}
+              onClick={() => onOpenGame(game.id)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  setDetailsGame(game);
+                  onOpenGame(game.id);
                 }
               }}
             >
@@ -713,39 +682,41 @@ function GameLoanModal({
       onClose={onClose}
     >
       <form className="modal-form" onSubmit={submit}>
-        <label className="field">
-          <span>Prêté par *</span>
-          <select
-            value={lenderId}
-            onChange={(event) => setLenderId(Number(event.target.value))}
-          >
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Date d’emprunt *</span>
-          <input
-            type="date"
-            required
-            value={borrowedAt}
-            onChange={(event) => setBorrowedAt(event.target.value)}
-          />
-        </label>
-        <label className="field">
-          <span>
-            Date de retour prévue <small>facultatif</small>
-          </span>
-          <input
-            type="date"
-            value={dueAt}
-            onChange={(event) => setDueAt(event.target.value)}
-          />
-        </label>
-        <div className="modal-actions">
+        <ModalContent>
+          <label className="field">
+            <span>Prêté par *</span>
+            <select
+              value={lenderId}
+              onChange={(event) => setLenderId(Number(event.target.value))}
+            >
+              {people.map((person) => (
+                <option key={person.id} value={person.id}>
+                  {person.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Date d’emprunt *</span>
+            <input
+              type="date"
+              required
+              value={borrowedAt}
+              onChange={(event) => setBorrowedAt(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>
+              Date de retour prévue <small>facultatif</small>
+            </span>
+            <input
+              type="date"
+              value={dueAt}
+              onChange={(event) => setDueAt(event.target.value)}
+            />
+          </label>
+        </ModalContent>
+        <ModalActions>
           <button type="button" className="ghost-button" onClick={onClose}>
             Annuler
           </button>
@@ -757,7 +728,7 @@ function GameLoanModal({
             )}{" "}
             Enregistrer le prêt
           </button>
-        </div>
+        </ModalActions>
       </form>
     </Modal>
   );

@@ -2,6 +2,23 @@
 
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
+
+export function ModalContent({ children }: { children: ReactNode }) {
+  return <div className="modal-form-content">{children}</div>;
+}
+
+export function ModalActions({
+  children,
+  split = false,
+}: {
+  children: ReactNode;
+  split?: boolean;
+}) {
+  return (
+    <div className={`modal-actions${split ? " split" : ""}`}>{children}</div>
+  );
+}
+
 export function Modal({
   title,
   subtitle,

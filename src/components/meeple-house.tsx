@@ -19,7 +19,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardData } from "@/lib/data";
 import { DashboardView } from "./meeple/dashboard";
@@ -77,8 +77,14 @@ const pageTitles: Record<View, { title: string; subtitle: string }> = {
 };
 
 export function MeepleHouse({ data }: { data: DashboardData }) {
+  const pathname = usePathname();
   const router = useRouter();
-  const [view, setView] = useState<View>("dashboard");
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const pathView = pathSegments[0];
+  const parsedDetailsId = Number(pathSegments[1]);
+  const detailsId = Number.isInteger(parsedDetailsId) ? parsedDetailsId : null;
+  const view: View =
+    pathView && pathView in pageTitles ? (pathView as View) : "dashboard";
   const [gameModal, setGameModal] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | undefined>();
   const [playModal, setPlayModal] = useState(false);
@@ -119,20 +125,27 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
   }, []);
 
   useEffect(() => {
-    if (!detailsGame) return;
-    const refreshedGame = data.games.find((game) => game.id === detailsGame.id);
-    if (refreshedGame && refreshedGame !== detailsGame) {
-      setDetailsGame(refreshedGame);
+    if (view === "games" && detailsId) {
+      setDetailsGame(data.games.find((game) => game.id === detailsId));
+      setDetailsPerson(undefined);
+      return;
     }
-  }, [data.games, detailsGame]);
+    if (view === "people" && detailsId) {
+      setDetailsPerson(data.people.find((person) => person.id === detailsId));
+      setDetailsGame(undefined);
+      return;
+    }
+    setDetailsGame(undefined);
+    setDetailsPerson(undefined);
+  }, [data.games, data.people, detailsId, view]);
 
   function showToast(message: string, error = false) {
     setToast({ message, error });
     window.setTimeout(() => setToast(null), 3600);
   }
   function navigate(next: View) {
-    setView(next);
     setSidebarOpen(false);
+    router.push(next === "dashboard" ? "/" : `/${next}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function openPlay(game?: Game) {
@@ -143,17 +156,15 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
   function openGameDetails(gameId: number) {
     const game = data.games.find((item) => item.id === gameId);
     if (!game) return;
-    setDetailsPerson(undefined);
-    setDetailsGame(game);
     setSidebarOpen(false);
+    router.push(`/games/${gameId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function openPersonDetails(personId: number) {
     const person = data.people.find((item) => item.id === personId);
     if (!person) return;
-    setDetailsGame(undefined);
-    setDetailsPerson(person);
     setSidebarOpen(false);
+    router.push(`/people/${personId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function openEditPlay(play: Play) {
@@ -364,9 +375,8 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               plays={data.plays}
               canEdit={isAdmin}
               onOpenGame={openGameDetails}
-              onBack={() => setDetailsPerson(undefined)}
+              onBack={() => navigate("people")}
               onEdit={(person) => {
-                setDetailsPerson(undefined);
                 setEditingPerson(person);
                 setPersonModal(true);
               }}
@@ -377,17 +387,14 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               people={data.people}
               plays={data.plays}
               canEdit={isAdmin}
-              onBack={() => setDetailsGame(undefined)}
+              onBack={() => navigate("games")}
               onEdit={(game) => {
                 setEditingGame(game);
                 setGameModal(true);
               }}
               onPlay={openPlay}
               onToast={showToast}
-              onChanged={() => {
-                setDetailsGame(undefined);
-                router.refresh();
-              }}
+              onChanged={() => router.refresh()}
             />
           ) : view === "dashboard" ? (
             <DashboardView
@@ -401,9 +408,8 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
           ) : view === "games" ? (
             <GamesView
               games={data.games}
-              people={data.people}
-              plays={data.plays}
               onPlay={openPlay}
+              onOpenGame={openGameDetails}
               onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
               onEdit={(game) => {
@@ -411,8 +417,6 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
                 setGameModal(true);
               }}
               onDelete={deleteGame}
-              onToast={showToast}
-              onChanged={() => router.refresh()}
             />
           ) : view === "plays" ? (
             <PlaysView
@@ -435,7 +439,7 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
                 setEditingPerson(person);
                 setPersonModal(true);
               }}
-              onOpenGame={openGameDetails}
+              onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
             />
           ) : view === "loans" ? (
