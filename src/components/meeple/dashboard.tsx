@@ -163,6 +163,26 @@ const StatCard = styled.article`
   border-radius: 13px;
   background: var(--paper);
 `;
+const StatCopy = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  span {
+    color: #69756e;
+    font-size: 9px;
+  }
+  strong {
+    color: var(--forest);
+    font-family: var(--serif);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.15;
+  }
+  small {
+    color: var(--muted);
+    font-size: 9px;
+  }
+`;
 const StatIcon = styled.span<{ $tone: string }>`
   width: 42px;
   height: 42px;
@@ -455,11 +475,11 @@ export function DashboardView({
             <StatIcon $tone={stat.tone}>
               <stat.icon size={20} />
             </StatIcon>
-            <div>
+            <StatCopy>
               <span>{stat.label}</span>
               <strong>{stat.value}</strong>
               <small>{stat.note}</small>
-            </div>
+            </StatCopy>
           </StatCard>
         ))}
       </StatsGrid>
