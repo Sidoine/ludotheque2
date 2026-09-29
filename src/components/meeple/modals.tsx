@@ -628,7 +628,7 @@ export function GameModal({
       onToast("Aucun jeu trouvé sur BoardGameGeek.", true);
   }
 
-  async function selectBggResult(bggId: string) {
+  async function selectBggResult(bggId: string, name: string) {
     setLoadingBgg(true);
     const response = await fetch(`/api/bgg?url=${bggId}`);
     const payload = await response.json();
@@ -636,7 +636,7 @@ export function GameModal({
     if (!response.ok) return onToast(payload.error, true);
     setForm((current) => ({
       ...current,
-      title: payload.title || current.title,
+      title: name || payload.title || current.title,
       bggUrl: payload.bggUrl || "",
       bggId: payload.bggId || "",
       imageUrl: payload.imageUrl || "",
@@ -762,7 +762,7 @@ export function GameModal({
                   <BggResult
                     type="button"
                     key={result.id}
-                    onClick={() => selectBggResult(result.id)}
+                    onClick={() => selectBggResult(result.id, result.name)}
                     disabled={loadingBgg}
                   >
                     <span>{result.name}</span>
