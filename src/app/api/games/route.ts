@@ -43,6 +43,7 @@ export async function POST(request: Request) {
           maxPlayers: optionalNumber(body.maxPlayers),
           playingTime: optionalNumber(body.playingTime),
           complexity: optionalNumber(body.complexity)?.toFixed(2) ?? null,
+          bggRating: optionalNumber(body.bggRating)?.toFixed(2) ?? null,
           categories: Array.isArray(body.categories)
             ? body.categories
                 .map(String)
@@ -122,6 +123,8 @@ export async function PATCH(request: Request) {
       update.playingTime = optionalNumber(body.playingTime);
     if (body.complexity !== undefined)
       update.complexity = optionalNumber(body.complexity)?.toFixed(2) ?? null;
+    if (body.bggRating !== undefined)
+      update.bggRating = optionalNumber(body.bggRating)?.toFixed(2) ?? null;
     if (body.categories !== undefined) {
       update.categories = Array.isArray(body.categories)
         ? body.categories

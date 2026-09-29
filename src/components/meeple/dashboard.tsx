@@ -148,6 +148,7 @@ export function DashboardView({
   canEdit: boolean;
 }) {
   const maxChart = Math.max(...data.chart.map((item) => item.count), 1);
+  const shelfGames = data.shelfGames ?? data.games.slice(0, 3);
   const statCards = [
     {
       label: "Jeux dans la collection",
@@ -204,7 +205,7 @@ export function DashboardView({
             onAction={() => setView("games")}
           />
           <div className="game-rows">
-            {data.games.slice(0, 3).map((game) => (
+            {shelfGames.map((game) => (
               <GameRow
                 key={game.id}
                 game={game}

@@ -40,6 +40,7 @@ export const games = pgTable(
     maxPlayers: integer("max_players"),
     playingTime: integer("playing_time"),
     complexity: numeric("complexity", { precision: 3, scale: 2 }),
+    bggRating: numeric("bgg_rating", { precision: 3, scale: 2 }),
     categories: text("categories").array().notNull().default([]),
     cooperative: boolean("cooperative").notNull().default(false),
     forSale: boolean("for_sale").notNull().default(false),

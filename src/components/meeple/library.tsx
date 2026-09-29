@@ -13,13 +13,14 @@ import {
   Pencil,
   Plus,
   Search,
+  Star,
   Tag,
   Trash2,
   Trophy,
   Users,
 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "./modal";
 import { Avatar, EmptyState, GameImage, relativeDate } from "./primitives";
 import type { Game, Person, Play } from "./types";
@@ -27,6 +28,16 @@ import type { Game, Person, Play } from "./types";
 function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
+type GameSort =
+  | "title"
+  | "lastPlayed"
+  | "playingTime"
+  | "complexity"
+  | "bggRating"
+  | "minPlayers"
+  | "maxPlayers";
+type SortDirection = "asc" | "desc";
+
 export function GamesView({
   games,
   people,
@@ -54,8 +65,18 @@ export function GamesView({
   const [filter, setFilter] = useState<"all" | "mine" | "borrowed" | "sale">(
     "all",
   );
+  const [sortBy, setSortBy] = useState<GameSort>("title");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [detailsGame, setDetailsGame] = useState<Game | undefined>();
+  useEffect(() => {
+    if (!detailsGame) return;
+    const refreshedGame = games.find((game) => game.id === detailsGame.id);
+    if (refreshedGame && refreshedGame !== detailsGame) {
+      setDetailsGame(refreshedGame);
+    }
+  }, [detailsGame, games]);
+
   const filtered = games.filter((game) => {
     const matches =
       game.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -66,6 +87,32 @@ export function GamesView({
     if (filter === "borrowed") return Boolean(game.activeLoan);
     if (filter === "sale") return game.forSale;
     return true;
+  });
+  const sortedGames = [...filtered].sort((first, second) => {
+    const direction = sortDirection === "asc" ? 1 : -1;
+    if (sortBy === "title")
+      return direction * first.title.localeCompare(second.title, "fr");
+
+    if (sortBy === "lastPlayed") {
+      if (!first.lastPlayed) return second.lastPlayed ? 1 : 0;
+      if (!second.lastPlayed) return -1;
+      return (
+        direction *
+        (new Date(first.lastPlayed).getTime() -
+          new Date(second.lastPlayed).getTime())
+      );
+    }
+
+    const firstRawValue = first[sortBy];
+    const secondRawValue = second[sortBy];
+    if (firstRawValue === null || firstRawValue === undefined)
+      return secondRawValue === null || secondRawValue === undefined ? 0 : 1;
+    if (secondRawValue === null || secondRawValue === undefined) return -1;
+    const difference =
+      direction * (Number(firstRawValue) - Number(secondRawValue));
+    return (
+      difference || direction * first.title.localeCompare(second.title, "fr")
+    );
   });
 
   if (detailsGame)
@@ -80,7 +127,6 @@ export function GamesView({
         onPlay={onPlay}
         onToast={onToast}
         onChanged={() => {
-          setDetailsGame(undefined);
           onChanged();
         }}
       />
@@ -116,10 +162,35 @@ export function GamesView({
             </button>
           ))}
         </div>
+        <label className="sort-select">
+          <span>Trier par</span>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as GameSort)}
+          >
+            <option value="title">Ordre alphabétique</option>
+            <option value="lastPlayed">Dernière partie</option>
+            <option value="playingTime">Durée d’une partie</option>
+            <option value="complexity">Difficulté</option>
+            <option value="bggRating">Note BGG</option>
+            <option value="minPlayers">Nombre minimal de joueurs</option>
+            <option value="maxPlayers">Nombre maximal de joueurs</option>
+          </select>
+          <select
+            aria-label="Ordre du tri"
+            value={sortDirection}
+            onChange={(event) =>
+              setSortDirection(event.target.value as SortDirection)
+            }
+          >
+            <option value="asc">Croissant</option>
+            <option value="desc">Décroissant</option>
+          </select>
+        </label>
       </div>
-      {filtered.length ? (
+      {sortedGames.length ? (
         <div className="games-grid">
-          {filtered.map((game) => (
+          {sortedGames.map((game) => (
             <article
               className="game-card"
               key={game.id}
@@ -222,22 +293,28 @@ export function GamesView({
                   <span>
                     <Dices size={14} /> {game.playCount}
                   </span>
+                  {game.bggRating && (
+                    <span
+                      className="card-bgg-rating"
+                      title={`Note BGG ${game.bggRating} sur 10`}
+                    >
+                      <Star size={14} /> {game.bggRating}
+                    </span>
+                  )}
                 </div>
                 <div className="game-card-footer">
                   <span className="owner-label">
                     {game.ownerships.length ? (
-                      <>
-                        <Avatar
-                          person={game.ownerships[0].person}
-                          small
-                          onOpen={() =>
-                            onOpenPerson(game.ownerships[0].person.id)
-                          }
-                        />{" "}
-                        {game.ownerships
-                          .map((item) => item.person.name)
-                          .join(", ")}
-                      </>
+                      <span className="owner-avatars">
+                        {game.ownerships.map((item) => (
+                          <Avatar
+                            key={item.personId}
+                            person={item.person}
+                            small
+                            onOpen={() => onOpenPerson(item.person.id)}
+                          />
+                        ))}
+                      </span>
                     ) : (
                       <>
                         <PackageOpen size={15} /> Propriétaire non indiqué
@@ -443,6 +520,34 @@ export function GameDetailsPage({
               <ExternalLink size={14} /> Voir sur BoardGameGeek
             </a>
           )}
+          <div className="game-details-facts">
+            <span>
+              <Users size={17} /> {game.minPlayers ?? "?"}–
+              {game.maxPlayers ?? "?"} joueurs
+            </span>
+            <span>
+              <Clock3 size={17} />{" "}
+              {game.playingTime ? `${game.playingTime} minutes` : "Durée libre"}
+            </span>
+            <span>
+              <Dices size={17} />{" "}
+              {game.categories.length
+                ? game.categories.join(" · ")
+                : "Catégories non renseignées"}
+            </span>
+            {game.bggRating && (
+              <span
+                className="bgg-rating"
+                aria-label={`Note BGG ${game.bggRating} sur 10`}
+              >
+                <span className="bgg-rating-star">
+                  <Star size={40} />
+                  <strong>{game.bggRating}</strong>
+                </span>
+                <small>/10 BGG</small>
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="game-details-stats">
@@ -542,22 +647,6 @@ export function GameDetailsPage({
             </div>
           </div>
         </section>
-      </div>
-      <div className="game-details-facts">
-        <span>
-          <Users size={15} /> {game.minPlayers ?? "?"}–{game.maxPlayers ?? "?"}{" "}
-          joueurs
-        </span>
-        <span>
-          <Clock3 size={15} />{" "}
-          {game.playingTime ? `${game.playingTime} minutes` : "Durée libre"}
-        </span>
-        <span>
-          <Dices size={15} />{" "}
-          {game.categories.length
-            ? game.categories.join(" · ")
-            : "Catégories non renseignées"}
-        </span>
       </div>
       {loanModal && (
         <GameLoanModal

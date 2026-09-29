@@ -118,6 +118,14 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
       .catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    if (!detailsGame) return;
+    const refreshedGame = data.games.find((game) => game.id === detailsGame.id);
+    if (refreshedGame && refreshedGame !== detailsGame) {
+      setDetailsGame(refreshedGame);
+    }
+  }, [data.games, detailsGame]);
+
   function showToast(message: string, error = false) {
     setToast({ message, error });
     window.setTimeout(() => setToast(null), 3600);

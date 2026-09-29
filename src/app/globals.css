@@ -1050,6 +1050,24 @@ textarea:focus-visible {
   box-shadow: 0 2px 8px rgba(30, 50, 40, 0.08);
   font-weight: 700;
 }
+.sort-select {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.sort-select select {
+  min-height: 33px;
+  padding: 0 28px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: white;
+  font-size: 10px;
+  cursor: pointer;
+}
 .games-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1188,6 +1206,10 @@ textarea:focus-visible {
   align-items: center;
   gap: 4px;
 }
+.game-facts .card-bgg-rating {
+  color: #a27a29;
+  font-weight: 700;
+}
 .game-card-footer {
   display: flex;
   align-items: center;
@@ -1204,6 +1226,17 @@ textarea:focus-visible {
   color: #707b75;
   font-size: 9px;
   line-height: 1.35;
+}
+.owner-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+.owner-avatars .avatar {
+  border-color: var(--paper);
+  color: #fff;
+  background-color: #20352d !important;
+  filter: none;
+  text-shadow: none;
 }
 .game-card-footer button {
   display: inline-flex;
@@ -2016,17 +2049,39 @@ textarea:focus-visible {
 .game-details-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 17px;
-  padding-top: 15px;
-  border-top: 1px solid var(--line);
+  gap: 10px 16px;
+  margin-top: 15px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 13px;
 }
 .game-details-facts span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
+}
+.bgg-rating {
+  color: var(--ink);
+  font-weight: 700;
+}
+.game-details-facts .bgg-rating-star {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  color: var(--gold);
+}
+.bgg-rating-star strong {
+  position: absolute;
+  color: var(--ink);
+  font-size: 9px;
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+.bgg-rating small {
+  color: var(--muted);
+  font-size: 11px;
 }
 .game-details-columns {
   display: grid;
@@ -2142,15 +2197,20 @@ textarea:focus-visible {
   font-size: 10px;
 }
 .bgg-helper {
-  display: grid;
-  grid-template-columns: 35px 1fr auto;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 13px;
   border-radius: 11px;
   background: #edf2ee;
 }
-.bgg-helper > span {
+.bgg-link-row {
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+.bgg-link-row > span {
   width: 35px;
   height: 35px;
   display: grid;
@@ -2160,7 +2220,7 @@ textarea:focus-visible {
   color: var(--forest);
   background: white;
 }
-.bgg-helper label {
+.bgg-link-row label {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -2173,7 +2233,7 @@ textarea:focus-visible {
   color: var(--muted);
   font-size: 8px;
 }
-.bgg-helper input {
+.bgg-link-row input {
   min-width: 0;
   height: 35px;
   padding: 0 10px;
@@ -2181,6 +2241,63 @@ textarea:focus-visible {
   border-radius: 7px;
   outline: 0;
   background: white;
+  font-size: 9px;
+}
+.bgg-search-helper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 13px;
+}
+.bgg-search-helper > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bgg-search-helper b {
+  font-size: 10px;
+}
+.bgg-search-helper small {
+  color: var(--muted);
+  font-size: 8px;
+}
+.bgg-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  width: 100%;
+  max-height: 190px;
+  overflow-y: auto;
+  padding: 0 13px;
+}
+.bgg-results button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: white;
+  cursor: pointer;
+  text-align: left;
+}
+.bgg-results button:hover {
+  border-color: var(--forest);
+  background: var(--forest-soft);
+}
+.bgg-results span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+.bgg-results small {
+  flex: 0 0 auto;
+  color: var(--muted);
   font-size: 9px;
 }
 .form-grid {
@@ -2691,6 +2808,13 @@ textarea:focus-visible {
     flex: 1;
     white-space: nowrap;
   }
+  .sort-select {
+    justify-content: space-between;
+  }
+  .sort-select select {
+    flex: 1;
+    min-width: 0;
+  }
   .games-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -2834,9 +2958,12 @@ textarea:focus-visible {
     grid-column: 1 / -1;
   }
   .bgg-helper {
+    gap: 12px;
+  }
+  .bgg-link-row {
     grid-template-columns: 32px 1fr;
   }
-  .bgg-helper .secondary-button {
+  .bgg-link-row .secondary-button {
     grid-column: 1 / -1;
   }
   .form-grid.two {

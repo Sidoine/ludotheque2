@@ -7,6 +7,7 @@ import {
   LogIn,
   MapPin,
   Plus,
+  Search,
   Sparkles,
   Trophy,
   Upload,
@@ -84,6 +85,7 @@ type GameFormState = {
   maxPlayers: string;
   playingTime: string;
   complexity: string;
+  bggRating: string;
   categories: string;
   cooperative: boolean;
   ownerIds: number[];
@@ -99,6 +101,7 @@ const emptyGameForm: GameFormState = {
   maxPlayers: "",
   playingTime: "",
   complexity: "",
+  bggRating: "",
   categories: "",
   cooperative: false,
   ownerIds: [],
@@ -121,6 +124,10 @@ export function GameModal({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
   const [loadingBgg, setLoadingBgg] = useState(false);
+  const [searchingBgg, setSearchingBgg] = useState(false);
+  const [bggResults, setBggResults] = useState<
+    { id: string; name: string; year: number | null }[]
+  >([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -145,6 +152,7 @@ export function GameModal({
       maxPlayers: editingGame.maxPlayers?.toString() ?? "",
       playingTime: editingGame.playingTime?.toString() ?? "",
       complexity: editingGame.complexity?.toString() ?? "",
+      bggRating: editingGame.bggRating?.toString() ?? "",
       categories: editingGame.categories.join(", "),
       cooperative: editingGame.cooperative,
       ownerIds: editingGame.ownerships.map((item) => item.personId),
@@ -177,10 +185,51 @@ export function GameModal({
       maxPlayers: payload.maxPlayers?.toString() || "",
       playingTime: payload.playingTime?.toString() || "",
       complexity: payload.complexity?.toFixed(2) || "",
+      bggRating: payload.bggRating?.toFixed(2) || "",
       categories: payload.categories?.join(", ") || "",
       cooperative: Boolean(payload.cooperative),
       ownerIds: form.ownerIds,
     });
+    onToast("Informations récupérées depuis BGG");
+  }
+
+  async function searchBgg() {
+    if (!form.title.trim())
+      return onToast("Saisissez le nom d’un jeu à rechercher.", true);
+    setSearchingBgg(true);
+    const response = await fetch(
+      `/api/bgg?query=${encodeURIComponent(form.title.trim())}`,
+    );
+    const payload = await response.json();
+    setSearchingBgg(false);
+    if (!response.ok) return onToast(payload.error, true);
+    setBggResults(payload.results ?? []);
+    if (!payload.results?.length)
+      onToast("Aucun jeu trouvé sur BoardGameGeek.", true);
+  }
+
+  async function selectBggResult(bggId: string) {
+    setLoadingBgg(true);
+    const response = await fetch(`/api/bgg?url=${bggId}`);
+    const payload = await response.json();
+    setLoadingBgg(false);
+    if (!response.ok) return onToast(payload.error, true);
+    setForm((current) => ({
+      ...current,
+      title: payload.title || current.title,
+      bggUrl: payload.bggUrl || "",
+      bggId: payload.bggId || "",
+      imageUrl: payload.imageUrl || "",
+      year: payload.year?.toString() || "",
+      minPlayers: payload.minPlayers?.toString() || "",
+      maxPlayers: payload.maxPlayers?.toString() || "",
+      playingTime: payload.playingTime?.toString() || "",
+      complexity: payload.complexity?.toFixed(2) || "",
+      bggRating: payload.bggRating?.toFixed(2) || "",
+      categories: payload.categories?.join(", ") || "",
+      cooperative: Boolean(payload.cooperative),
+    }));
+    setBggResults([]);
     onToast("Informations récupérées depuis BGG");
   }
 
@@ -246,33 +295,69 @@ export function GameModal({
     >
       <form className="modal-form" onSubmit={submit}>
         <div className="bgg-helper">
-          <span>
-            <Link2 size={19} />
-          </span>
-          <label>
-            <b>Lien BoardGameGeek</b>
-            <small>
-              Les informations peuvent être préremplies automatiquement.
-            </small>
-            <input
-              value={form.bggUrl}
-              onChange={(event) => update("bggUrl", event.target.value)}
-              placeholder="https://boardgamegeek.com/boardgame/…"
-            />
-          </label>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={fetchBgg}
-            disabled={loadingBgg}
-          >
-            {loadingBgg ? (
-              <Loader2 className="spin" size={16} />
-            ) : (
-              <Sparkles size={16} />
-            )}{" "}
-            Récupérer
-          </button>
+          <div className="bgg-link-row">
+            <span>
+              <Link2 size={19} />
+            </span>
+            <label>
+              <b>Lien BoardGameGeek</b>
+              <small>
+                Les informations peuvent être préremplies automatiquement.
+              </small>
+              <input
+                value={form.bggUrl}
+                onChange={(event) => update("bggUrl", event.target.value)}
+                placeholder="https://boardgamegeek.com/boardgame/…"
+              />
+            </label>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={fetchBgg}
+              disabled={loadingBgg}
+            >
+              {loadingBgg ? (
+                <Loader2 className="spin" size={16} />
+              ) : (
+                <Sparkles size={16} />
+              )}{" "}
+              Récupérer
+            </button>
+          </div>
+          <div className="bgg-search-helper">
+            <div>
+              <b>Ou rechercher par nom</b>
+              <small>Utilise le nom saisi dans la fiche.</small>
+            </div>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={searchBgg}
+              disabled={searchingBgg}
+            >
+              {searchingBgg ? (
+                <Loader2 className="spin" size={16} />
+              ) : (
+                <Search size={16} />
+              )}{" "}
+              {searchingBgg ? "Recherche…" : "Rechercher"}
+            </button>
+          </div>
+          {bggResults.length > 0 && (
+            <div className="bgg-results" aria-label="Résultats BoardGameGeek">
+              {bggResults.map((result) => (
+                <button
+                  type="button"
+                  key={result.id}
+                  onClick={() => selectBggResult(result.id)}
+                  disabled={loadingBgg}
+                >
+                  <span>{result.name}</span>
+                  {result.year && <small>{result.year}</small>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="form-grid two">
           <label className="field span-2">

@@ -346,9 +346,13 @@ export async function getDashboardData() {
   ).size;
   const topGame =
     enrichedGames.toSorted((a, b) => b.playCount - a.playCount)[0] ?? null;
+  const shelfGames = [...enrichedGames]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
 
   return {
     games: enrichedGames,
+    shelfGames,
     people: peopleRows.map((person) => ({
       ...person,
       createdAt: person.createdAt.toISOString(),
