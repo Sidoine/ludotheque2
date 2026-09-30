@@ -9,7 +9,7 @@ export default async function DetailPage({
   const { view, id } = await params;
   const numericId = Number(id);
   if (
-    (view !== "games" && view !== "people") ||
+    (view !== "games" && view !== "people" && view !== "plays") ||
     !Number.isInteger(numericId) ||
     numericId <= 0
   ) {

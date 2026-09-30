@@ -2,7 +2,7 @@
 
 import styled from "@emotion/styled";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import type { FormEventHandler, ReactNode } from "react";
 
 const ModalBackdrop = styled.div`
   position: fixed;
@@ -105,6 +105,20 @@ const StyledModalContent = styled.div`
   overscroll-behavior: contain;
 `;
 
+const ModalForm = styled.form`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  padding: 22px 27px 25px;
+
+  @media (max-width: 700px) {
+    padding: 19px;
+  }
+`;
+
 const StyledModalActions = styled.div<{ $split: boolean }>`
   flex-shrink: 0;
   display: flex;
@@ -160,12 +174,14 @@ export function Modal({
   onClose,
   children,
   wide = false,
+  onSubmit,
 }: {
   title: string;
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
 }) {
   return (
     <ModalBackdrop
@@ -189,7 +205,11 @@ export function Modal({
             <X size={19} />
           </CloseButton>
         </ModalHeader>
-        {children}
+        {onSubmit ? (
+          <ModalForm onSubmit={onSubmit}>{children}</ModalForm>
+        ) : (
+          children
+        )}
       </ModalSurface>
     </ModalBackdrop>
   );

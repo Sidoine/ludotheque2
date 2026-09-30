@@ -16,7 +16,6 @@ import {
   Plus,
   Sparkles,
   Tag,
-  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -24,6 +23,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardData } from "@/lib/data";
 import { DashboardView } from "./meeple/dashboard";
+import { DeleteGameModal } from "./meeple/delete-game-modal";
 import {
   GameDetailsPage,
   type GameFilter,
@@ -35,7 +35,12 @@ import {
 import { GameModal, LoginModal, PersonModal, PlayModal } from "./meeple/modals";
 import { Avatar } from "./meeple/primitives";
 import { ImportView, LoansView, SaleView, StatsView } from "./meeple/secondary";
-import { PeopleView, PersonDetailsPage, PlaysView } from "./meeple/social";
+import {
+  PeopleView,
+  PersonDetailsPage,
+  PlayDetailsPage,
+  PlaysView,
+} from "./meeple/social";
 import type { Game, Person, Play, View } from "./meeple/types";
 
 type IconType = typeof LayoutDashboard;
@@ -565,6 +570,8 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
   const [editingPlay, setEditingPlay] = useState<Play | undefined>();
   const [personModal, setPersonModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | undefined>();
+  const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -578,6 +585,10 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
     error: boolean;
   } | null>(null);
   const title = pageTitles[view];
+  const detailsPlay =
+    view === "plays" && detailsId
+      ? data.plays.find((play) => play.id === detailsId)
+      : undefined;
   const currentDate = useMemo(
     () =>
       new Intl.DateTimeFormat("fr-FR", {
@@ -646,6 +657,13 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
     router.push(`/people/${personId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+  function openPlayDetails(playId: number) {
+    const play = data.plays.find((item) => item.id === playId);
+    if (!play) return;
+    setSidebarOpen(false);
+    router.push(`/plays/${playId}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   function openEditPlay(play: Play) {
     setEditingPlay(play);
     setSelectedGame(undefined);
@@ -655,20 +673,31 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
     close();
     router.refresh();
   }
-  async function deleteGame(game: Game) {
-    if (!window.confirm(`Supprimer « ${game.title} » de la ludothèque ?`))
-      return;
-    const response = await fetch(`/api/games?id=${game.id}`, {
-      method: "DELETE",
-    });
-    const payload = await response.json();
-    if (!response.ok)
-      return showToast(
-        payload.error || "Impossible de supprimer ce jeu.",
-        true,
-      );
-    showToast(`${game.title} a été supprimé`);
-    router.refresh();
+  function requestDeleteGame(game: Game) {
+    setGameToDelete(game);
+  }
+  async function confirmDeleteGame() {
+    const game = gameToDelete;
+    if (!game || deletePending) return;
+    setDeletePending(true);
+    try {
+      const response = await fetch(`/api/games?id=${game.id}`, {
+        method: "DELETE",
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        showToast(payload.error || "Impossible de supprimer ce jeu.", true);
+        return;
+      }
+      setGameToDelete(null);
+      showToast(`${game.title} a été supprimé`);
+      router.refresh();
+      openGames(navigationState);
+    } catch {
+      showToast("Impossible de supprimer ce jeu.", true);
+    } finally {
+      setDeletePending(false);
+    }
   }
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -792,43 +821,32 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
           </PageTitle>
           <HeaderActions>
             {isAdmin ? (
-              <>
-                {view !== "import" && (
+              view === "plays" ? (
+                <ActionButton
+                  $kind="primary"
+                  type="button"
+                  onClick={() => openPlay()}
+                >
+                  <Plus size={17} /> Ajouter une partie
+                </ActionButton>
+              ) : (
+                <>
                   <ActionButton
                     $kind="secondary"
-                    type="button"
-                    onClick={() => navigate("import")}
-                  >
-                    <Upload size={17} /> Importer
-                  </ActionButton>
-                )}
-                {view === "plays" ? (
-                  <ActionButton
-                    $kind="primary"
                     type="button"
                     onClick={() => openPlay()}
                   >
                     <Plus size={17} /> Ajouter une partie
                   </ActionButton>
-                ) : (
-                  <>
-                    <ActionButton
-                      $kind="secondary"
-                      type="button"
-                      onClick={() => openPlay()}
-                    >
-                      <Plus size={17} /> Ajouter une partie
-                    </ActionButton>
-                    <ActionButton
-                      $kind="primary"
-                      type="button"
-                      onClick={() => setGameModal(true)}
-                    >
-                      <Plus size={17} /> Ajouter un jeu
-                    </ActionButton>
-                  </>
-                )}
-              </>
+                  <ActionButton
+                    $kind="primary"
+                    type="button"
+                    onClick={() => setGameModal(true)}
+                  >
+                    <Plus size={17} /> Ajouter un jeu
+                  </ActionButton>
+                </>
+              )
             ) : (
               <ActionButton
                 $kind="secondary"
@@ -842,7 +860,16 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
         </Topbar>
 
         <PageContent>
-          {detailsPerson ? (
+          {detailsPlay ? (
+            <PlayDetailsPage
+              play={detailsPlay}
+              canEdit={isAdmin}
+              onBack={() => navigate("plays")}
+              onEdit={openEditPlay}
+              onOpenGame={openGameDetails}
+              onOpenPerson={openPersonDetails}
+            />
+          ) : detailsPerson ? (
             <PersonDetailsPage
               person={detailsPerson}
               plays={data.plays}
@@ -880,6 +907,8 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
                 setGameModal(true);
               }}
               onPlay={openPlay}
+              onOpenPlay={openPlayDetails}
+              onDelete={requestDeleteGame}
               onToast={showToast}
               onChanged={() => router.refresh()}
             />
@@ -904,13 +933,14 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
                 setEditingGame(game);
                 setGameModal(true);
               }}
-              onDelete={deleteGame}
+              onDelete={requestDeleteGame}
             />
           ) : view === "plays" ? (
             <PlaysView
               plays={data.plays}
               onAdd={() => openPlay()}
               onEdit={openEditPlay}
+              onOpenPlay={openPlayDetails}
               onOpenGame={openGameDetails}
               onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
@@ -1017,6 +1047,14 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
             setIsAdmin(true);
           }}
           onToast={showToast}
+        />
+      )}
+      {gameToDelete && (
+        <DeleteGameModal
+          game={gameToDelete}
+          pending={deletePending}
+          onCancel={() => setGameToDelete(null)}
+          onConfirm={() => void confirmDeleteGame()}
         />
       )}
       {toast && (

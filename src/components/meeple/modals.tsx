@@ -17,22 +17,11 @@ import {
 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import { ActionButton } from "./action-button";
 import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar } from "./primitives";
 import type { Game, Person, Play } from "./types";
 
-const ModalForm = styled.form`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow: hidden;
-  padding: 22px 27px 25px;
-  @media (max-width: 700px) {
-    padding: 19px;
-  }
-`;
 const FormGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -82,55 +71,6 @@ const FormField = styled.label<{
   }
   @media (max-width: 700px) {
     grid-column: auto;
-  }
-`;
-const ActionButton = styled.button<{
-  $variant?: "primary" | "secondary" | "ghost";
-}>`
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 15px;
-  border: 1px solid
-    ${({ $variant = "primary" }) =>
-      $variant === "primary"
-        ? "var(--forest)"
-        : $variant === "secondary"
-          ? "#d7d5ce"
-          : "transparent"};
-  border-radius: 9px;
-  color: ${({ $variant = "primary" }) =>
-    $variant === "primary"
-      ? "white"
-      : $variant === "secondary"
-        ? "#4e5b55"
-        : "var(--muted)"};
-  background: ${({ $variant = "primary" }) =>
-    $variant === "primary"
-      ? "var(--forest)"
-      : $variant === "secondary"
-        ? "rgba(255,255,255,.72)"
-        : "transparent"};
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s,
-    background 0.15s;
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-  &:hover:not(:disabled) {
-    background: ${({ $variant = "primary" }) =>
-      $variant === "primary"
-        ? "var(--forest-dark)"
-        : $variant === "secondary"
-          ? "white"
-          : "#f3f2ed"};
   }
 `;
 const Spinner = styled(Loader2)`
@@ -474,23 +414,22 @@ export function LoginModal({
       title="Connexion administrateur"
       subtitle="Les visiteurs peuvent consulter la ludothèque en lecture seule."
       onClose={onClose}
+      onSubmit={submit}
     >
-      <ModalForm onSubmit={submit}>
-        <ModalContent>
-          <FormField>
-            <span>Mot de passe</span>
-            <input autoFocus required name="password" type="password" />
-          </FormField>
-        </ModalContent>
-        <ModalActions>
-          <ActionButton $variant="ghost" type="button" onClick={onClose}>
-            Annuler
-          </ActionButton>
-          <ActionButton disabled={loading}>
-            {loading ? <Spinner size={17} /> : <LogIn size={17} />} Se connecter
-          </ActionButton>
-        </ModalActions>
-      </ModalForm>
+      <ModalContent>
+        <FormField>
+          <span>Mot de passe</span>
+          <input autoFocus required name="password" type="password" />
+        </FormField>
+      </ModalContent>
+      <ModalActions>
+        <ActionButton $variant="ghost" type="button" onClick={onClose}>
+          Annuler
+        </ActionButton>
+        <ActionButton disabled={loading}>
+          {loading ? <Spinner size={17} /> : <LogIn size={17} />} Se connecter
+        </ActionButton>
+      </ModalActions>
     </Modal>
   );
 }
@@ -711,206 +650,203 @@ export function GameModal({
       title={editingGame ? "Modifier le jeu" : "Ajouter un jeu"}
       subtitle="Complétez la fiche à la main ou laissez BGG vous aider."
       onClose={onClose}
+      onSubmit={submit}
       wide
     >
-      <ModalForm onSubmit={submit}>
-        <ModalContent>
-          <BggHelper>
-            <BggLinkRow>
-              <span>
-                <Link2 size={19} />
-              </span>
-              <label>
-                <b>Lien BoardGameGeek</b>
-                <small>
-                  Les informations peuvent être préremplies automatiquement.
-                </small>
-                <input
-                  value={form.bggUrl}
-                  onChange={(event) => update("bggUrl", event.target.value)}
-                  placeholder="https://boardgamegeek.com/boardgame/…"
-                />
-              </label>
-              <ActionButton
-                $variant="secondary"
-                type="button"
-                onClick={fetchBgg}
-                disabled={loadingBgg}
-              >
-                {loadingBgg ? <Spinner size={16} /> : <Sparkles size={16} />}{" "}
-                Récupérer
-              </ActionButton>
-            </BggLinkRow>
-            <BggSearchHelper>
-              <div>
-                <b>Ou rechercher par nom</b>
-                <small>Utilise le nom saisi dans la fiche.</small>
-              </div>
-              <ActionButton
-                $variant="secondary"
-                type="button"
-                onClick={searchBgg}
-                disabled={searchingBgg}
-              >
-                {searchingBgg ? <Spinner size={16} /> : <Search size={16} />}{" "}
-                {searchingBgg ? "Recherche…" : "Rechercher"}
-              </ActionButton>
-            </BggSearchHelper>
-            {bggResults.length > 0 && (
-              <BggResults aria-label="Résultats BoardGameGeek">
-                {bggResults.map((result) => (
-                  <BggResult
-                    type="button"
-                    key={result.id}
-                    onClick={() => selectBggResult(result.id, result.name)}
-                    disabled={loadingBgg}
-                  >
-                    <span>{result.name}</span>
-                    {result.year && <small>{result.year}</small>}
-                  </BggResult>
-                ))}
-              </BggResults>
-            )}
-          </BggHelper>
-          <FormGrid>
-            <FormField $wide>
-              <span>Nom du jeu *</span>
-              <input
-                required
-                value={form.title}
-                onChange={(event) => update("title", event.target.value)}
-                placeholder="Ex. Harmonies"
-              />
-            </FormField>
-            <FormField as="div" $wide>
-              <span>Image de couverture</span>
-              <CoverUpload>
-                <CoverUploadButton htmlFor="game-cover">
-                  <Upload size={16} /> Importer une couverture
-                </CoverUploadButton>
-                <HiddenFileInput
-                  id="game-cover"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  onChange={(event) =>
-                    setCoverFile(event.target.files?.[0] ?? null)
-                  }
-                />
-                {coverFile ? (
-                  <small>{coverFile.name}</small>
-                ) : (
-                  <small>JPG, PNG, WEBP ou GIF · 5 Mo maximum</small>
-                )}
-              </CoverUpload>
-              {coverPreview && (
-                <CoverPreview
-                  src={coverPreview}
-                  alt="Prévisualisation de la couverture"
-                />
-              )}
-            </FormField>
-            <FormField>
-              <span>Année</span>
-              <input
-                type="number"
-                value={form.year}
-                onChange={(event) => update("year", event.target.value)}
-                placeholder="2024"
-              />
-            </FormField>
-            <FormField>
-              <span>Durée moyenne</span>
-              <InputWithSuffix>
-                <input
-                  type="number"
-                  value={form.playingTime}
-                  onChange={(event) =>
-                    update("playingTime", event.target.value)
-                  }
-                  placeholder="45"
-                />
-                <i>min</i>
-              </InputWithSuffix>
-            </FormField>
-            <FormField>
-              <span>Joueurs min.</span>
-              <input
-                type="number"
-                min="1"
-                value={form.minPlayers}
-                onChange={(event) => update("minPlayers", event.target.value)}
-              />
-            </FormField>
-            <FormField>
-              <span>Joueurs max.</span>
-              <input
-                type="number"
-                min="1"
-                value={form.maxPlayers}
-                onChange={(event) => update("maxPlayers", event.target.value)}
-              />
-            </FormField>
-            <FormField $wide>
-              <span>Catégories</span>
-              <input
-                value={form.categories}
-                onChange={(event) => update("categories", event.target.value)}
-                placeholder="Stratégie, Cartes, Famille…"
-              />
-            </FormField>
-          </FormGrid>
-          <ChoiceField>
-            <legend>
-              Propriétaires <small>Plusieurs choix possibles</small>
-            </legend>
-            <ChoiceList>
-              {people.map((person) => (
-                <ChoiceButton
-                  type="button"
-                  $selected={form.ownerIds.includes(person.id)}
-                  key={person.id}
-                  onClick={() => toggleOwner(person.id)}
-                >
-                  <Avatar person={person} small /> {person.name}
-                  <Check size={14} />
-                </ChoiceButton>
-              ))}
-            </ChoiceList>
-          </ChoiceField>
-          <SwitchField>
-            <input
-              type="checkbox"
-              checked={form.cooperative}
-              onChange={(event) => update("cooperative", event.target.checked)}
-            />
+      <ModalContent>
+        <BggHelper>
+          <BggLinkRow>
             <span>
-              <Check size={13} />
+              <Link2 size={19} />
             </span>
+            <label>
+              <b>Lien BoardGameGeek</b>
+              <small>
+                Les informations peuvent être préremplies automatiquement.
+              </small>
+              <input
+                value={form.bggUrl}
+                onChange={(event) => update("bggUrl", event.target.value)}
+                placeholder="https://boardgamegeek.com/boardgame/…"
+              />
+            </label>
+            <ActionButton
+              $variant="secondary"
+              type="button"
+              onClick={fetchBgg}
+              disabled={loadingBgg}
+            >
+              {loadingBgg ? <Spinner size={16} /> : <Sparkles size={16} />}{" "}
+              Récupérer
+            </ActionButton>
+          </BggLinkRow>
+          <BggSearchHelper>
             <div>
-              <b>Jeu coopératif</b>
-              <small>Le résultat sera enregistré pour tout le groupe.</small>
+              <b>Ou rechercher par nom</b>
+              <small>Utilise le nom saisi dans la fiche.</small>
             </div>
-          </SwitchField>
-          <input type="hidden" name="bggId" value={form.bggId} />
-        </ModalContent>
-        <ModalActions>
-          <ActionButton $variant="ghost" type="button" onClick={onClose}>
-            Annuler
-          </ActionButton>
-          <ActionButton disabled={saving}>
-            {saving ? (
-              <Spinner size={17} />
-            ) : editingGame ? (
-              <Check size={17} />
-            ) : (
-              <Plus size={17} />
-            )}{" "}
-            {editingGame
-              ? "Enregistrer les modifications"
-              : "Ajouter à la ludothèque"}
-          </ActionButton>
-        </ModalActions>
-      </ModalForm>
+            <ActionButton
+              $variant="secondary"
+              type="button"
+              onClick={searchBgg}
+              disabled={searchingBgg}
+            >
+              {searchingBgg ? <Spinner size={16} /> : <Search size={16} />}{" "}
+              {searchingBgg ? "Recherche…" : "Rechercher"}
+            </ActionButton>
+          </BggSearchHelper>
+          {bggResults.length > 0 && (
+            <BggResults aria-label="Résultats BoardGameGeek">
+              {bggResults.map((result) => (
+                <BggResult
+                  type="button"
+                  key={result.id}
+                  onClick={() => selectBggResult(result.id, result.name)}
+                  disabled={loadingBgg}
+                >
+                  <span>{result.name}</span>
+                  {result.year && <small>{result.year}</small>}
+                </BggResult>
+              ))}
+            </BggResults>
+          )}
+        </BggHelper>
+        <FormGrid>
+          <FormField $wide>
+            <span>Nom du jeu *</span>
+            <input
+              required
+              value={form.title}
+              onChange={(event) => update("title", event.target.value)}
+              placeholder="Ex. Harmonies"
+            />
+          </FormField>
+          <FormField as="div" $wide>
+            <span>Image de couverture</span>
+            <CoverUpload>
+              <CoverUploadButton htmlFor="game-cover">
+                <Upload size={16} /> Importer une couverture
+              </CoverUploadButton>
+              <HiddenFileInput
+                id="game-cover"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(event) =>
+                  setCoverFile(event.target.files?.[0] ?? null)
+                }
+              />
+              {coverFile ? (
+                <small>{coverFile.name}</small>
+              ) : (
+                <small>JPG, PNG, WEBP ou GIF · 5 Mo maximum</small>
+              )}
+            </CoverUpload>
+            {coverPreview && (
+              <CoverPreview
+                src={coverPreview}
+                alt="Prévisualisation de la couverture"
+              />
+            )}
+          </FormField>
+          <FormField>
+            <span>Année</span>
+            <input
+              type="number"
+              value={form.year}
+              onChange={(event) => update("year", event.target.value)}
+              placeholder="2024"
+            />
+          </FormField>
+          <FormField>
+            <span>Durée moyenne</span>
+            <InputWithSuffix>
+              <input
+                type="number"
+                value={form.playingTime}
+                onChange={(event) => update("playingTime", event.target.value)}
+                placeholder="45"
+              />
+              <i>min</i>
+            </InputWithSuffix>
+          </FormField>
+          <FormField>
+            <span>Joueurs min.</span>
+            <input
+              type="number"
+              min="1"
+              value={form.minPlayers}
+              onChange={(event) => update("minPlayers", event.target.value)}
+            />
+          </FormField>
+          <FormField>
+            <span>Joueurs max.</span>
+            <input
+              type="number"
+              min="1"
+              value={form.maxPlayers}
+              onChange={(event) => update("maxPlayers", event.target.value)}
+            />
+          </FormField>
+          <FormField $wide>
+            <span>Catégories</span>
+            <input
+              value={form.categories}
+              onChange={(event) => update("categories", event.target.value)}
+              placeholder="Stratégie, Cartes, Famille…"
+            />
+          </FormField>
+        </FormGrid>
+        <ChoiceField>
+          <legend>
+            Propriétaires <small>Plusieurs choix possibles</small>
+          </legend>
+          <ChoiceList>
+            {people.map((person) => (
+              <ChoiceButton
+                type="button"
+                $selected={form.ownerIds.includes(person.id)}
+                key={person.id}
+                onClick={() => toggleOwner(person.id)}
+              >
+                <Avatar person={person} small /> {person.name}
+                <Check size={14} />
+              </ChoiceButton>
+            ))}
+          </ChoiceList>
+        </ChoiceField>
+        <SwitchField>
+          <input
+            type="checkbox"
+            checked={form.cooperative}
+            onChange={(event) => update("cooperative", event.target.checked)}
+          />
+          <span>
+            <Check size={13} />
+          </span>
+          <div>
+            <b>Jeu coopératif</b>
+            <small>Le résultat sera enregistré pour tout le groupe.</small>
+          </div>
+        </SwitchField>
+        <input type="hidden" name="bggId" value={form.bggId} />
+      </ModalContent>
+      <ModalActions>
+        <ActionButton $variant="ghost" type="button" onClick={onClose}>
+          Annuler
+        </ActionButton>
+        <ActionButton disabled={saving}>
+          {saving ? (
+            <Spinner size={17} />
+          ) : editingGame ? (
+            <Check size={17} />
+          ) : (
+            <Plus size={17} />
+          )}{" "}
+          {editingGame
+            ? "Enregistrer les modifications"
+            : "Ajouter à la ludothèque"}
+        </ActionButton>
+      </ModalActions>
     </Modal>
   );
 }
@@ -1056,162 +992,159 @@ export function PlayModal({
           : "Les détails de la soirée seront conservés pour la saisie suivante."
       }
       onClose={onClose}
+      onSubmit={(event) => submit(event, false)}
       wide
     >
-      <ModalForm onSubmit={(event) => submit(event, false)}>
-        <ModalContent>
-          <FormGrid>
-            <FormField $wide>
-              <span>Jeu *</span>
-              <select
-                value={gameId}
-                onChange={(event) => {
-                  setGameId(Number(event.target.value));
-                  setWinners(new Set());
-                  setGroupWon(null);
-                }}
-              >
-                {games.map((game) => (
-                  <option key={game.id} value={game.id}>
-                    {game.title}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField>
-              <span>Date *</span>
-              <input
-                name="date"
-                type="date"
-                required
-                defaultValue={defaults.date}
-              />
-            </FormField>
-            <FormField>
-              <span>Heure</span>
-              <input name="time" type="time" defaultValue={defaults.time} />
-            </FormField>
-            <FormField $wide>
-              <span>Lieu *</span>
-              <InputWithIcon>
-                <MapPin size={16} />
-                <input
-                  name="location"
-                  required
-                  defaultValue={defaults.location}
-                  placeholder="À la maison, chez Marc…"
-                />
-              </InputWithIcon>
-            </FormField>
-          </FormGrid>
-          <ChoiceField>
-            <legend>Participants *</legend>
-            <ChoiceList>
-              {people.map((person) => (
-                <ChoiceButton
-                  type="button"
-                  $selected={participants.has(person.id)}
-                  key={person.id}
-                  onClick={() =>
-                    toggle(setParticipants, participants, person.id)
-                  }
-                >
-                  <Avatar person={person} small /> {person.name}
-                  <Check size={14} />
-                </ChoiceButton>
+      <ModalContent>
+        <FormGrid>
+          <FormField $wide>
+            <span>Jeu *</span>
+            <select
+              value={gameId}
+              onChange={(event) => {
+                setGameId(Number(event.target.value));
+                setWinners(new Set());
+                setGroupWon(null);
+              }}
+            >
+              {games.map((game) => (
+                <option key={game.id} value={game.id}>
+                  {game.title}
+                </option>
               ))}
-            </ChoiceList>
-          </ChoiceField>
-          {selectedGame?.cooperative ? (
-            <ChoiceField>
-              <legend>Résultat du groupe</legend>
-              <ResultChoice>
-                <ResultButton
-                  type="button"
-                  $selected={groupWon === true}
-                  $won
-                  onClick={() => setGroupWon(true)}
-                >
-                  <Trophy size={17} /> Victoire
-                </ResultButton>
-                <ResultButton
-                  type="button"
-                  $selected={groupWon === false}
-                  $won={false}
-                  onClick={() => setGroupWon(false)}
-                >
-                  <X size={17} /> Défaite
-                </ResultButton>
-              </ResultChoice>
-            </ChoiceField>
-          ) : (
-            <ChoiceField>
-              <legend>
-                Gagnant·e·s <small>Plusieurs choix possibles</small>
-              </legend>
-              <ChoiceList>
-                {people
-                  .filter((person) => participants.has(person.id))
-                  .map((person) => (
-                    <ChoiceButton
-                      type="button"
-                      $selected={winners.has(person.id)}
-                      $winner
-                      key={person.id}
-                      onClick={() => toggle(setWinners, winners, person.id)}
-                    >
-                      <Trophy size={14} /> {person.name}
-                      <Check size={14} />
-                    </ChoiceButton>
-                  ))}
-              </ChoiceList>
-            </ChoiceField>
-          )}
-          <FormField as="label">
-            <span>Notes de partie</span>
-            <textarea
-              name="notes"
-              rows={3}
-              defaultValue={initialPlay?.notes ?? ""}
-              placeholder="Étape de la campagne, scénario, moments mémorables…"
+            </select>
+          </FormField>
+          <FormField>
+            <span>Date *</span>
+            <input
+              name="date"
+              type="date"
+              required
+              defaultValue={defaults.date}
             />
           </FormField>
-        </ModalContent>
-        <ModalActions split>
-          <ActionButton $variant="ghost" type="button" onClick={onClose}>
-            Annuler
-          </ActionButton>
-          <div>
-            {!initialPlay && (
-              <ActionButton
-                $variant="secondary"
-                type="submit"
-                name="another"
-                value="yes"
-                disabled={saving}
-                onClick={(event) => {
-                  event.preventDefault();
-                  const form = event.currentTarget.closest("form");
-                  if (form?.reportValidity())
-                    void submit(
-                      {
-                        preventDefault: () => undefined,
-                        currentTarget: form,
-                      } as FormEvent<HTMLFormElement>,
-                      true,
-                    );
-                }}
+          <FormField>
+            <span>Heure</span>
+            <input name="time" type="time" defaultValue={defaults.time} />
+          </FormField>
+          <FormField $wide>
+            <span>Lieu *</span>
+            <InputWithIcon>
+              <MapPin size={16} />
+              <input
+                name="location"
+                required
+                defaultValue={defaults.location}
+                placeholder="À la maison, chez Marc…"
+              />
+            </InputWithIcon>
+          </FormField>
+        </FormGrid>
+        <ChoiceField>
+          <legend>Participants *</legend>
+          <ChoiceList>
+            {people.map((person) => (
+              <ChoiceButton
+                type="button"
+                $selected={participants.has(person.id)}
+                key={person.id}
+                onClick={() => toggle(setParticipants, participants, person.id)}
               >
-                <Plus size={16} /> Enregistrer & continuer
-              </ActionButton>
-            )}
-            <ActionButton disabled={saving}>
-              {saving ? <Spinner size={17} /> : <Check size={17} />}{" "}
-              {initialPlay ? "Enregistrer les modifications" : "Enregistrer"}
+                <Avatar person={person} small /> {person.name}
+                <Check size={14} />
+              </ChoiceButton>
+            ))}
+          </ChoiceList>
+        </ChoiceField>
+        {selectedGame?.cooperative ? (
+          <ChoiceField>
+            <legend>Résultat du groupe</legend>
+            <ResultChoice>
+              <ResultButton
+                type="button"
+                $selected={groupWon === true}
+                $won
+                onClick={() => setGroupWon(true)}
+              >
+                <Trophy size={17} /> Victoire
+              </ResultButton>
+              <ResultButton
+                type="button"
+                $selected={groupWon === false}
+                $won={false}
+                onClick={() => setGroupWon(false)}
+              >
+                <X size={17} /> Défaite
+              </ResultButton>
+            </ResultChoice>
+          </ChoiceField>
+        ) : (
+          <ChoiceField>
+            <legend>
+              Gagnant·e·s <small>Plusieurs choix possibles</small>
+            </legend>
+            <ChoiceList>
+              {people
+                .filter((person) => participants.has(person.id))
+                .map((person) => (
+                  <ChoiceButton
+                    type="button"
+                    $selected={winners.has(person.id)}
+                    $winner
+                    key={person.id}
+                    onClick={() => toggle(setWinners, winners, person.id)}
+                  >
+                    <Trophy size={14} /> {person.name}
+                    <Check size={14} />
+                  </ChoiceButton>
+                ))}
+            </ChoiceList>
+          </ChoiceField>
+        )}
+        <FormField as="label">
+          <span>Notes de partie</span>
+          <textarea
+            name="notes"
+            rows={3}
+            defaultValue={initialPlay?.notes ?? ""}
+            placeholder="Étape de la campagne, scénario, moments mémorables…"
+          />
+        </FormField>
+      </ModalContent>
+      <ModalActions split>
+        <ActionButton $variant="ghost" type="button" onClick={onClose}>
+          Annuler
+        </ActionButton>
+        <div>
+          {!initialPlay && (
+            <ActionButton
+              $variant="secondary"
+              type="submit"
+              name="another"
+              value="yes"
+              disabled={saving}
+              onClick={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget.closest("form");
+                if (form?.reportValidity())
+                  void submit(
+                    {
+                      preventDefault: () => undefined,
+                      currentTarget: form,
+                    } as FormEvent<HTMLFormElement>,
+                    true,
+                  );
+              }}
+            >
+              <Plus size={16} /> Enregistrer & continuer
             </ActionButton>
-          </div>
-        </ModalActions>
-      </ModalForm>
+          )}
+          <ActionButton disabled={saving}>
+            {saving ? <Spinner size={17} /> : <Check size={17} />}{" "}
+            {initialPlay ? "Enregistrer les modifications" : "Enregistrer"}
+          </ActionButton>
+        </div>
+      </ModalActions>
     </Modal>
   );
 }
@@ -1256,63 +1189,62 @@ export function PersonModal({
       title={editingPerson ? "Modifier un joueur" : "Ajouter une personne"}
       subtitle="Un nouveau visage autour de la table."
       onClose={onClose}
+      onSubmit={submit}
     >
-      <ModalForm onSubmit={submit}>
-        <ModalContent>
-          <FormField>
-            <span>Prénom ou nom *</span>
-            <input
-              autoFocus
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ex. Camille"
-            />
-          </FormField>
-          <FormField>
-            <span>
-              Email <small>facultatif</small>
-            </span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="camille@exemple.com"
-            />
-          </FormField>
-          <SwitchField>
-            <input
-              type="checkbox"
-              checked={isHousehold}
-              onChange={(event) => setIsHousehold(event.target.checked)}
-            />
-            <span>
-              <Check size={13} />
-            </span>
-            <div>
-              <b>Membre de la maison</b>
-              <small>
-                Cette personne peut posséder les jeux de votre collection.
-              </small>
-            </div>
-          </SwitchField>
-        </ModalContent>
-        <ModalActions>
-          <ActionButton $variant="ghost" type="button" onClick={onClose}>
-            Annuler
-          </ActionButton>
-          <ActionButton disabled={saving}>
-            {saving ? (
-              <Spinner size={17} />
-            ) : editingPerson ? (
-              <Check size={17} />
-            ) : (
-              <UserPlus size={17} />
-            )}{" "}
-            {editingPerson ? "Enregistrer" : "Ajouter"}
-          </ActionButton>
-        </ModalActions>
-      </ModalForm>
+      <ModalContent>
+        <FormField>
+          <span>Prénom ou nom *</span>
+          <input
+            autoFocus
+            required
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ex. Camille"
+          />
+        </FormField>
+        <FormField>
+          <span>
+            Email <small>facultatif</small>
+          </span>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="camille@exemple.com"
+          />
+        </FormField>
+        <SwitchField>
+          <input
+            type="checkbox"
+            checked={isHousehold}
+            onChange={(event) => setIsHousehold(event.target.checked)}
+          />
+          <span>
+            <Check size={13} />
+          </span>
+          <div>
+            <b>Membre de la maison</b>
+            <small>
+              Cette personne peut posséder les jeux de votre collection.
+            </small>
+          </div>
+        </SwitchField>
+      </ModalContent>
+      <ModalActions>
+        <ActionButton $variant="ghost" type="button" onClick={onClose}>
+          Annuler
+        </ActionButton>
+        <ActionButton disabled={saving}>
+          {saving ? (
+            <Spinner size={17} />
+          ) : editingPerson ? (
+            <Check size={17} />
+          ) : (
+            <UserPlus size={17} />
+          )}{" "}
+          {editingPerson ? "Enregistrer" : "Ajouter"}
+        </ActionButton>
+      </ModalActions>
     </Modal>
   );
 }

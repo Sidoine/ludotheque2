@@ -370,8 +370,10 @@ const DetailsToolbar = styled.div`
   margin-bottom: 25px;
   & > div {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
+  }
+  .game-actions {
+    flex-wrap: wrap;
   }
   @media (max-width: 700px) {
     align-items: flex-start;
@@ -379,7 +381,7 @@ const DetailsToolbar = styled.div`
     & > div {
       width: 100%;
     }
-    & > div > button {
+    .game-actions > button {
       flex: 1;
       justify-content: center;
     }
@@ -388,7 +390,11 @@ const DetailsToolbar = styled.div`
     }
   }
 `;
+const DetailsNavigationGroup = styled.div`
+  align-items: center;
+`;
 const DetailsNavigation = styled.div`
+  display: flex;
   align-items: center;
   gap: 5px !important;
 `;
@@ -454,6 +460,15 @@ const ActionButton = styled.button<{
     cursor: not-allowed;
   }
 `;
+const DeleteActionButton = styled(ActionButton)`
+  border-color: #d8aaa2;
+  color: #a33f2b;
+  background: #fff8f6;
+
+  &:hover:not(:disabled) {
+    background: #f5e2db;
+  }
+`;
 const DetailHeading = styled.div`
   display: grid;
   grid-template-columns: 145px 1fr;
@@ -475,7 +490,7 @@ const DetailHeading = styled.div`
     line-height: 1.4;
   }
   @media (max-width: 700px) {
-    grid-template-columns: 88px 1fr;
+    grid-template-columns: 110px minmax(0, 1fr);
     gap: 14px;
     h2 {
       font-size: 21px;
@@ -592,14 +607,26 @@ const DetailPlayList = styled.div`
   display: flex;
   flex-direction: column;
 `;
-const DetailPlayRow = styled.div`
+const DetailPlayRow = styled.button`
+  width: 100%;
   display: grid;
   grid-template-columns: 92px 90px minmax(100px, 1fr) minmax(120px, 1.1fr);
   align-items: center;
   gap: 9px;
   padding: 10px 0;
   border-top: 1px solid #efede7;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
   font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+  &:hover {
+    background: var(--forest-soft);
+  }
   strong {
     color: var(--ink);
     font-size: 10px;
@@ -674,18 +701,6 @@ const DetailEmpty = styled.p`
   margin: 0;
   color: var(--muted);
   font-size: 10px;
-`;
-const LoanForm = styled.form`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow: hidden;
-  padding: 22px 27px 25px;
-  @media (max-width: 700px) {
-    padding: 19px;
-  }
 `;
 const LoanField = styled.label`
   display: flex;
@@ -1048,6 +1063,8 @@ export function GameDetailsPage({
   onNavigateGame,
   onEdit,
   onPlay,
+  onOpenPlay,
+  onDelete,
   onToast,
   onChanged,
 }: {
@@ -1061,6 +1078,8 @@ export function GameDetailsPage({
   onNavigateGame: (gameId: number) => void;
   onEdit: (game: Game) => void;
   onPlay: (game: Game) => void;
+  onOpenPlay: (playId: number) => void;
+  onDelete: (game: Game) => void;
   onToast: (message: string, error?: boolean) => void;
   onChanged: () => void;
 }) {
@@ -1139,39 +1158,43 @@ export function GameDetailsPage({
   return (
     <GameDetailsShell>
       <DetailsToolbar>
-        <BackButton type="button" onClick={onBack}>
-          <ArrowRight size={16} /> Ma ludothèque
-        </BackButton>
-        <DetailsNavigation
-          className="game-navigation"
-          aria-label="Navigation entre les jeux"
-        >
-          <DetailsNavigationButton
-            type="button"
-            aria-label={
-              previousGame
-                ? `Jeu précédent : ${previousGame.title}`
-                : "Aucun jeu précédent"
-            }
-            title={previousGame?.title ?? "Aucun jeu précédent"}
-            disabled={!previousGame}
-            onClick={() => previousGame && onNavigateGame(previousGame.id)}
+        <DetailsNavigationGroup>
+          <BackButton type="button" onClick={onBack}>
+            <ArrowRight size={16} /> Ma ludothèque
+          </BackButton>
+          <DetailsNavigation
+            className="game-navigation"
+            aria-label="Navigation entre les jeux"
           >
-            <ChevronLeft size={18} />
-          </DetailsNavigationButton>
-          <DetailsNavigationButton
-            type="button"
-            aria-label={
-              nextGame ? `Jeu suivant : ${nextGame.title}` : "Aucun jeu suivant"
-            }
-            title={nextGame?.title ?? "Aucun jeu suivant"}
-            disabled={!nextGame}
-            onClick={() => nextGame && onNavigateGame(nextGame.id)}
-          >
-            <ChevronRight size={18} />
-          </DetailsNavigationButton>
-        </DetailsNavigation>
-        <div>
+            <DetailsNavigationButton
+              type="button"
+              aria-label={
+                previousGame
+                  ? `Jeu précédent : ${previousGame.title}`
+                  : "Aucun jeu précédent"
+              }
+              title={previousGame?.title ?? "Aucun jeu précédent"}
+              disabled={!previousGame}
+              onClick={() => previousGame && onNavigateGame(previousGame.id)}
+            >
+              <ChevronLeft size={18} />
+            </DetailsNavigationButton>
+            <DetailsNavigationButton
+              type="button"
+              aria-label={
+                nextGame
+                  ? `Jeu suivant : ${nextGame.title}`
+                  : "Aucun jeu suivant"
+              }
+              title={nextGame?.title ?? "Aucun jeu suivant"}
+              disabled={!nextGame}
+              onClick={() => nextGame && onNavigateGame(nextGame.id)}
+            >
+              <ChevronRight size={18} />
+            </DetailsNavigationButton>
+          </DetailsNavigation>
+        </DetailsNavigationGroup>
+        <div className="game-actions">
           {canEdit && (
             <ActionButton type="button" onClick={toggleSale}>
               <Tag size={16} />{" "}
@@ -1192,9 +1215,14 @@ export function GameDetailsPage({
               <Pencil size={16} /> Modifier
             </ActionButton>
           )}
+          {canEdit && gamePlays.length === 0 && (
+            <DeleteActionButton type="button" onClick={() => onDelete(game)}>
+              <Trash2 size={16} /> Supprimer le jeu
+            </DeleteActionButton>
+          )}
           {canEdit && (
             <ActionButton $primary type="button" onClick={() => onPlay(game)}>
-              <Plus size={16} /> Noter une partie
+              <Plus size={16} /> Ajouter une partie
             </ActionButton>
           )}
         </div>
@@ -1299,7 +1327,12 @@ export function GameDetailsPage({
                   "Résultat non noté"
                 );
                 return (
-                  <DetailPlayRow key={play.id}>
+                  <DetailPlayRow
+                    key={play.id}
+                    type="button"
+                    aria-label={`Afficher les détails de la partie du ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(play.playedAt))}`}
+                    onClick={() => onOpenPlay(play.id)}
+                  >
                     <strong>
                       {new Intl.DateTimeFormat("fr-FR", {
                         day: "numeric",
@@ -1411,52 +1444,51 @@ function GameLoanModal({
       title="Enregistrer un emprunt"
       subtitle="Indiquez qui emprunte cette boîte."
       onClose={onClose}
+      onSubmit={submit}
     >
-      <LoanForm onSubmit={submit}>
-        <ModalContent>
-          <LoanField>
-            <span>Emprunté par *</span>
-            <select
-              value={borrowerId}
-              onChange={(event) => setBorrowerId(Number(event.target.value))}
-            >
-              {people.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.name}
-                </option>
-              ))}
-            </select>
-          </LoanField>
-          <LoanField>
-            <span>Date d’emprunt *</span>
-            <input
-              type="date"
-              required
-              value={borrowedAt}
-              onChange={(event) => setBorrowedAt(event.target.value)}
-            />
-          </LoanField>
-          <LoanField>
-            <span>
-              Date de retour prévue <small>facultatif</small>
-            </span>
-            <input
-              type="date"
-              value={dueAt}
-              onChange={(event) => setDueAt(event.target.value)}
-            />
-          </LoanField>
-        </ModalContent>
-        <ModalActions>
-          <ActionButton type="button" onClick={onClose}>
-            Annuler
-          </ActionButton>
-          <ActionButton $primary disabled={saving}>
-            {saving ? <LoanSpinner size={17} /> : <HandHeart size={17} />}{" "}
-            Enregistrer l’emprunt
-          </ActionButton>
-        </ModalActions>
-      </LoanForm>
+      <ModalContent>
+        <LoanField>
+          <span>Emprunté par *</span>
+          <select
+            value={borrowerId}
+            onChange={(event) => setBorrowerId(Number(event.target.value))}
+          >
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+        </LoanField>
+        <LoanField>
+          <span>Date d’emprunt *</span>
+          <input
+            type="date"
+            required
+            value={borrowedAt}
+            onChange={(event) => setBorrowedAt(event.target.value)}
+          />
+        </LoanField>
+        <LoanField>
+          <span>
+            Date de retour prévue <small>facultatif</small>
+          </span>
+          <input
+            type="date"
+            value={dueAt}
+            onChange={(event) => setDueAt(event.target.value)}
+          />
+        </LoanField>
+      </ModalContent>
+      <ModalActions>
+        <ActionButton type="button" onClick={onClose}>
+          Annuler
+        </ActionButton>
+        <ActionButton $primary disabled={saving}>
+          {saving ? <LoanSpinner size={17} /> : <HandHeart size={17} />}{" "}
+          Enregistrer l’emprunt
+        </ActionButton>
+      </ModalActions>
     </Modal>
   );
 }
