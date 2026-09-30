@@ -715,11 +715,6 @@ const LoanField = styled.label`
     font-weight: 400;
   }
 `;
-const LoanButtons = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-`;
 const LoanSpinner = styled(Loader2)`
   animation: loan-spin 1s linear infinite;
   @keyframes loan-spin {
@@ -1189,7 +1184,7 @@ export function GameDetailsPage({
               onClick={game.activeLoan ? returnGame : () => setLoanModal(true)}
             >
               <HandHeart size={16} />{" "}
-              {game.activeLoan ? "Marquer rendu" : "Marquer emprunté"}
+              {game.activeLoan ? "Marquer rendu" : "Enregistrer un emprunt"}
             </ActionButton>
           )}
           {canEdit && (
@@ -1382,21 +1377,21 @@ function GameLoanModal({
   onSaved: () => void;
   onToast: (message: string, error?: boolean) => void;
 }) {
-  const [lenderId, setLenderId] = useState(people[0]?.id ?? 0);
+  const [borrowerId, setBorrowerId] = useState(people[0]?.id ?? 0);
   const [borrowedAt, setBorrowedAt] = useState(todayString());
   const [dueAt, setDueAt] = useState("");
   const [saving, setSaving] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!lenderId)
-      return onToast("Choisissez la personne qui vous prête le jeu.", true);
+    if (!borrowerId)
+      return onToast("Choisissez la personne qui emprunte ce jeu.", true);
     setSaving(true);
     const response = await fetch("/api/loans", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         gameId: game.id,
-        lenderId,
+        borrowerId,
         borrowedAt,
         dueAt: dueAt || null,
       }),
@@ -1408,22 +1403,22 @@ function GameLoanModal({
         payload.error || "Impossible d’enregistrer ce prêt.",
         true,
       );
-    onToast(`${game.title} a été marqué comme emprunté`);
+    onToast(`${game.title} est maintenant emprunté`);
     onSaved();
   }
   return (
     <Modal
-      title="Marquer comme emprunté"
-      subtitle="Gardez la trace de la personne qui vous prête cette boîte."
+      title="Enregistrer un emprunt"
+      subtitle="Indiquez qui emprunte cette boîte."
       onClose={onClose}
     >
       <LoanForm onSubmit={submit}>
         <ModalContent>
           <LoanField>
-            <span>Prêté par *</span>
+            <span>Emprunté par *</span>
             <select
-              value={lenderId}
-              onChange={(event) => setLenderId(Number(event.target.value))}
+              value={borrowerId}
+              onChange={(event) => setBorrowerId(Number(event.target.value))}
             >
               {people.map((person) => (
                 <option key={person.id} value={person.id}>
@@ -1453,15 +1448,13 @@ function GameLoanModal({
           </LoanField>
         </ModalContent>
         <ModalActions>
-          <LoanButtons>
-            <ActionButton type="button" onClick={onClose}>
-              Annuler
-            </ActionButton>
-            <ActionButton $primary disabled={saving}>
-              {saving ? <LoanSpinner size={17} /> : <HandHeart size={17} />}{" "}
-              Enregistrer le prêt
-            </ActionButton>
-          </LoanButtons>
+          <ActionButton type="button" onClick={onClose}>
+            Annuler
+          </ActionButton>
+          <ActionButton $primary disabled={saving}>
+            {saving ? <LoanSpinner size={17} /> : <HandHeart size={17} />}{" "}
+            Enregistrer l’emprunt
+          </ActionButton>
         </ModalActions>
       </LoanForm>
     </Modal>

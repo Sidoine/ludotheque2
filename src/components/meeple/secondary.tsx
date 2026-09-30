@@ -403,24 +403,24 @@ export function LoansView({ games }: { games: Game[] }) {
       <InfoBanner>
         <Info size={19} />
         <div>
-          <strong>Une mémoire pour vos étagères</strong>
-          <p>
-            Enregistrez ce que vous prêtez et ce que vos amis vous confient.
-          </p>
+          <strong>Suivi des prêts</strong>
+          <p>Suivez les jeux que vous empruntez et ceux que vous prêtez.</p>
         </div>
       </InfoBanner>
       <LoanColumns>
         <section>
-          <SectionHeading title={`Empruntés (${loaned.length})`} />
+          <SectionHeading title={`Jeux empruntés (${loaned.length})`} />
           {loaned.map((game) => (
             <LoanCard key={game.id}>
               <GameImage game={game} variant="card" />
               <div>
-                <Pill>Chez vous</Pill>
+                <Pill>Emprunté</Pill>
                 <h3>{game.title}</h3>
                 <p>
-                  Prêté par{" "}
-                  <strong>{game.activeLoan?.lender?.name ?? "un ami"}</strong>
+                  Emprunté par{" "}
+                  <strong>
+                    {game.activeLoan?.borrower?.name ?? "Non indiqué"}
+                  </strong>
                 </p>
                 <small>
                   Depuis le{" "}
@@ -436,7 +436,7 @@ export function LoansView({ games }: { games: Game[] }) {
           ))}
         </section>
         <section>
-          <SectionHeading title="Prêtés (0)" />{" "}
+          <SectionHeading title="Jeux prêtés (0)" />{" "}
           <EmptyState
             icon={HandHeart}
             title="Aucun jeu prêté"
