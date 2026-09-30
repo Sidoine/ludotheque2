@@ -54,6 +54,7 @@ const GameRowTitle = styled.div`
   display: flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
   h3 {
     overflow: hidden;
     margin: 0 0 4px;
@@ -153,6 +154,15 @@ const StatsGrid = styled.section`
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
 `;
 const StatCard = styled.article`
   display: flex;
@@ -195,8 +205,12 @@ const StatIcon = styled.span<{ $tone: string }>`
 `;
 const DashboardGrid = styled.section`
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
   gap: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const ActivityList = styled.div`
   display: flex;
@@ -204,9 +218,13 @@ const ActivityList = styled.div`
 `;
 const DashboardLower = styled.section`
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.35fr);
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 0.35fr);
   gap: 18px;
   margin-top: 18px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const ChartPanel = styled(DashboardPanel)`
   min-height: 245px;
@@ -215,6 +233,11 @@ const ChartPanel = styled(DashboardPanel)`
 const ChartHeading = styled.div`
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+  }
 `;
 const ChartTotal = styled.div`
   display: flex;
@@ -264,6 +287,7 @@ const Bar = styled.div`
 `;
 const ChallengeCard = styled.div`
   position: relative;
+  min-width: 0;
   padding: 25px;
   border-radius: 13px;
   color: white;

@@ -304,6 +304,7 @@ const SidebarScrim = styled.button`
 `;
 
 const MainContent = styled.main`
+  min-width: 0;
   min-height: 100vh;
   margin-left: 248px;
 
@@ -320,6 +321,18 @@ const Topbar = styled.header`
   padding: 28px clamp(28px, 3.5vw, 54px) 24px;
   border-bottom: 1px solid rgba(216, 212, 201, 0.7);
   background: rgba(245, 243, 237, 0.93);
+
+  @media (max-width: 900px) {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px 24px;
+  }
+
+  @media (max-width: 680px) {
+    min-height: 0;
+    gap: 12px;
+    padding: 17px 16px;
+  }
 `;
 
 const MobileMenu = styled.button`
@@ -364,7 +377,22 @@ const PageTitle = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 9px;
+
+  @media (max-width: 900px) {
+    width: 100%;
+  }
+
+  @media (max-width: 680px) {
+    gap: 7px;
+
+    & > button {
+      flex: 1 1 auto;
+      padding: 0 10px;
+      font-size: 11px;
+    }
+  }
 `;
 
 const ActionButton = styled.button<{ $kind: "primary" | "secondary" }>`
@@ -392,9 +420,14 @@ const ActionButton = styled.button<{ $kind: "primary" | "secondary" }>`
 `;
 
 const PageContent = styled.div`
+  min-width: 0;
   max-width: 1530px;
   margin: 0 auto;
   padding: 28px clamp(28px, 3.5vw, 54px) 54px;
+
+  @media (max-width: 680px) {
+    padding: 18px 14px 82px;
+  }
 `;
 
 const MobileNav = styled.nav`

@@ -21,8 +21,12 @@ import type { Person, Play } from "./types";
 
 const PlaysLayout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 250px);
   gap: 18px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const PlayHistory = styled.div`
   padding: 22px 25px;
@@ -59,6 +63,45 @@ const PlayRow = styled.article`
   border-top: 1px solid #eeece6;
   &:first-of-type {
     border-top: 0;
+  }
+
+  @media (max-width: 700px) {
+    position: relative;
+    grid-template-columns: 34px 42px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+
+    & > :nth-child(1) {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+    }
+
+    & > :nth-child(2) {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+
+    & > :nth-child(3) {
+      grid-column: 3;
+      grid-row: 1;
+    }
+
+    & > :nth-child(4) {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    & > :nth-child(5) {
+      grid-column: 3;
+      grid-row: 3;
+    }
+
+    & > :nth-child(6) {
+      position: absolute;
+      top: 10px;
+      right: 0;
+      grid-row: 1;
+    }
   }
 `;
 const PlayDate = styled.div`
@@ -204,6 +247,15 @@ const PeopleIntro = styled.div`
     font-size: 21px;
     font-weight: 500;
   }
+
+  @media (max-width: 700px) {
+    align-items: stretch;
+    flex-direction: column;
+
+    h2 {
+      font-size: 18px;
+    }
+  }
 `;
 const Eyebrow = styled.p`
   margin: 0 0 5px;
@@ -230,8 +282,16 @@ const SecondaryButton = styled.button`
 `;
 const PeopleGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+
+  @media (max-width: 1050px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const PersonCard = styled.article`
   position: relative;
@@ -348,14 +408,22 @@ const DetailsAvatar = styled.span`
 `;
 const DetailsStats = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 24px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 `;
 const DetailsColumns = styled.div`
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: 24px;
+
+  @media (max-width: 800px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const DetailsSection = styled.section`
   padding-top: 16px;
@@ -368,6 +436,33 @@ const DetailsRow = styled.div`
   padding: 11px 0;
   border-bottom: 1px solid var(--line);
   font-size: 11px;
+
+  @media (max-width: 700px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 5px 10px;
+
+    & > :first-child,
+    & > :nth-child(2) {
+      grid-column: 1 / -1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & > small {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & > :last-child {
+      text-align: right;
+    }
+  }
 `;
 const Charts = styled.div`
   display: grid;

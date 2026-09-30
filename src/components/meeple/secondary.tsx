@@ -49,12 +49,16 @@ const InfoBanner = styled.div`
 `;
 const LoanColumns = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+
+  @media (max-width: 850px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const LoanCard = styled.article`
   display: grid;
-  grid-template-columns: 70px 1fr auto;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
   align-items: center;
   gap: 13px;
   padding: 13px 0;
@@ -75,6 +79,16 @@ const LoanCard = styled.article`
     background: transparent;
     font-size: 10px;
     cursor: pointer;
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 10px;
+
+    button {
+      grid-column: 2;
+      justify-self: start;
+    }
   }
 `;
 const Pill = styled.span`
@@ -124,8 +138,16 @@ const SaleSummary = styled.div`
 `;
 const GamesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+
+  @media (max-width: 850px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const SaleCard = styled.article`
   overflow: hidden;
@@ -161,12 +183,16 @@ const SaleCard = styled.article`
 `;
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const RankingRow = styled.div`
   display: grid;
-  grid-template-columns: 25px 50px 1fr 100px 28px;
+  grid-template-columns: 25px 50px minmax(0, 1fr) minmax(45px, 100px) 28px;
   align-items: center;
   gap: 10px;
   padding: 10px 0;
@@ -183,6 +209,14 @@ const RankingRow = styled.div`
   b {
     font-size: 11px;
     text-align: right;
+  }
+
+  @media (max-width: 520px) {
+    grid-template-columns: 22px 42px minmax(0, 1fr) 28px;
+
+    & > :nth-child(4) {
+      display: none;
+    }
   }
 `;
 const Rank = styled.span`
@@ -241,8 +275,12 @@ const Bar = styled.div`
 `;
 const ImportLayout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 300px);
   gap: 18px;
+
+  @media (max-width: 850px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const ImportCard = styled(Panel)`
   text-align: center;
