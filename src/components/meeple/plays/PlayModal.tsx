@@ -3,6 +3,7 @@
 import { Check, MapPin, Plus, Trophy, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { getParisDateTime } from "@/lib/date-time";
 import { ActionButton } from "../shared/action-button";
 import { Modal, ModalActions, ModalContent } from "../shared/modal";
 import {
@@ -19,8 +20,7 @@ import type { Game, Person, Play } from "../types";
 import { InputWithIcon } from "./play-modal-styles";
 
 function todayString() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return getParisDateTime().date;
 }
 
 type EveningDefaults = {
@@ -67,10 +67,10 @@ export function PlayModal({
 }) {
   const [defaults, setDefaults] = useState<EveningDefaults>(() => {
     if (!initialPlay) return loadEveningDefaults();
-    const playedAt = new Date(initialPlay.playedAt);
+    const playedAt = getParisDateTime(new Date(initialPlay.playedAt));
     return {
-      date: `${playedAt.getFullYear()}-${String(playedAt.getMonth() + 1).padStart(2, "0")}-${String(playedAt.getDate()).padStart(2, "0")}`,
-      time: `${String(playedAt.getHours()).padStart(2, "0")}:${String(playedAt.getMinutes()).padStart(2, "0")}`,
+      date: playedAt.date,
+      time: playedAt.time,
       location: initialPlay.location,
       participantIds: initialPlay.participants.map((item) => item.person.id),
     };

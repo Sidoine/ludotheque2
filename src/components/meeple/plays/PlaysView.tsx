@@ -2,6 +2,7 @@
 
 import styled from "@emotion/styled";
 import { Dices, MapPin, Pencil, Plus, Trophy } from "lucide-react";
+import { PARIS_TIME_ZONE } from "@/lib/date-time";
 import { AvatarStack, GameImage, GameLink } from "../shared/primitives";
 import type { Play } from "../types";
 
@@ -39,9 +40,12 @@ const MonthTitle = styled.h2`
     font-size: 10px;
   }
 `;
-const PlayRow = styled.article`
+const PlayRow = styled.article<{ $canEdit: boolean }>`
   display: grid;
-  grid-template-columns: 38px 50px minmax(0, 1fr) auto auto;
+  grid-template-columns: ${({ $canEdit }) =>
+    $canEdit
+      ? "38px 50px minmax(0, 1fr) auto auto 30px"
+      : "38px 50px minmax(0, 1fr) auto auto"};
   align-items: center;
   gap: 13px;
   min-height: 82px;
@@ -244,6 +248,7 @@ export function PlaysView({
     const key = new Intl.DateTimeFormat("fr-FR", {
       month: "long",
       year: "numeric",
+      timeZone: PARIS_TIME_ZONE,
     }).format(date);
     result[key] = [...(result[key] ?? []), play];
     return result;
@@ -262,17 +267,23 @@ export function PlaysView({
             {monthPlays.map((play) => {
               const winners = play.participants.filter((item) => item.isWinner);
               return (
-                <PlayRow key={play.id}>
+                <PlayRow key={play.id} $canEdit={canEdit}>
                   <PlayDate
                     type="button"
                     title="Afficher les détails de cette partie"
-                    aria-label={`Afficher les détails de la partie du ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(new Date(play.playedAt))}`}
+                    aria-label={`Afficher les détails de la partie du ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: PARIS_TIME_ZONE }).format(new Date(play.playedAt))}`}
                     onClick={() => onOpenPlay(play.id)}
                   >
-                    <strong>{new Date(play.playedAt).getDate()}</strong>
+                    <strong>
+                      {new Intl.DateTimeFormat("fr-FR", {
+                        day: "numeric",
+                        timeZone: PARIS_TIME_ZONE,
+                      }).format(new Date(play.playedAt))}
+                    </strong>
                     <span>
                       {new Intl.DateTimeFormat("fr-FR", {
                         weekday: "short",
+                        timeZone: PARIS_TIME_ZONE,
                       }).format(new Date(play.playedAt))}
                     </span>
                   </PlayDate>

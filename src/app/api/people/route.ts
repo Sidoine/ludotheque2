@@ -65,6 +65,7 @@ export async function PATCH(request: Request) {
       .set({
         name,
         email: String(body.email ?? "").trim() || null,
+        color: body.color || undefined,
         isHousehold: Boolean(body.isHousehold),
       })
       .where(eq(people.id, id))

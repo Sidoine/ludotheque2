@@ -361,7 +361,14 @@ const MobileMenu = styled.button`
 `;
 
 const PageTitle = styled.div`
+  min-width: 0;
   flex: 1;
+  padding: 12px 18px;
+  border: 1px solid rgba(216, 212, 201, 0.7);
+  border-radius: 12px;
+  background-color: #f5f3ed;
+  background-position: center right;
+  background-size: cover;
   & > p {
     margin: 0 0 5px;
     color: var(--terracotta);
@@ -820,7 +827,11 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
           <MobileMenu type="button" onClick={() => setSidebarOpen(true)}>
             <Menu size={21} />
           </MobileMenu>
-          <PageTitle>
+          <PageTitle
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(245, 243, 237, 0.98) 0%, rgba(245, 243, 237, 0.92) 48%, rgba(245, 243, 237, 0.7) 100%), url("/page-backgrounds/${view}.webp")`,
+            }}
+          >
             <p>{view === "dashboard" ? currentDate : "Ludothèque"}</p>
             <h1>{title.title}</h1>
             <span>{title.subtitle}</span>
@@ -924,6 +935,7 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               setView={navigate}
               onPlay={openPlay}
               onOpenGame={openGameDetails}
+              onOpenPlay={openPlayDetails}
               canEdit={isAdmin}
             />
           ) : view === "games" ? (

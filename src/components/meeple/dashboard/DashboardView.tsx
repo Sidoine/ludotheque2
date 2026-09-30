@@ -212,12 +212,14 @@ export function DashboardView({
   setView,
   onPlay,
   onOpenGame,
+  onOpenPlay,
   canEdit,
 }: {
   data: DashboardData;
   setView: (view: View) => void;
   onPlay: (game?: Game) => void;
   onOpenGame: (gameId: number) => void;
+  onOpenPlay: (playId: number) => void;
   canEdit: boolean;
 }) {
   const maxChart = Math.max(...data.chart.map((item) => item.count), 1);
@@ -297,7 +299,12 @@ export function DashboardView({
           />
           <ActivityList>
             {data.plays.slice(0, 3).map((play) => (
-              <RecentPlay key={play.id} play={play} onOpenGame={onOpenGame} />
+              <RecentPlay
+                key={play.id}
+                play={play}
+                onOpenGame={onOpenGame}
+                onOpenPlay={onOpenPlay}
+              />
             ))}
           </ActivityList>
         </DashboardPanel>

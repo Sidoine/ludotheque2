@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { playParticipants, plays } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { parseParisDateTime } from "@/lib/date-time";
 
 export async function POST(request: Request) {
   const unauthorized = await requireAdmin(request);
@@ -34,8 +35,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const playedAt = new Date(`${body.date}T${body.time || "20:00"}:00`);
-    if (Number.isNaN(playedAt.getTime())) {
+    const playedAt = parseParisDateTime(body.date, body.time || "20:00");
+    if (!playedAt) {
       return NextResponse.json(
         { error: "La date est invalide." },
         { status: 400 },
@@ -111,8 +112,8 @@ export async function PATCH(request: Request) {
         { status: 400 },
       );
     }
-    const playedAt = new Date(`${body.date}T${body.time || "20:00"}:00`);
-    if (Number.isNaN(playedAt.getTime()))
+    const playedAt = parseParisDateTime(body.date, body.time || "20:00");
+    if (!playedAt)
       return NextResponse.json(
         { error: "La date est invalide." },
         { status: 400 },

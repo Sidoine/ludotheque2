@@ -2,6 +2,7 @@
 
 import styled from "@emotion/styled";
 import { MapPin, Trophy } from "lucide-react";
+import { PARIS_TIME_ZONE } from "@/lib/date-time";
 import type { Play } from "../types";
 import { AvatarStack } from "./primitives";
 
@@ -123,7 +124,7 @@ export function RecentPlaysList({
             key={play.id}
             type="button"
             $personView={view.type === "person"}
-            aria-label={`Afficher les détails de la partie de ${play.game.title} du ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(date)}`}
+            aria-label={`Afficher les détails de la partie de ${play.game.title} du ${new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: PARIS_TIME_ZONE }).format(date)}`}
             onClick={() => onOpenPlay(play.id)}
           >
             <strong>
@@ -131,6 +132,7 @@ export function RecentPlaysList({
                 day: "numeric",
                 month: "short",
                 year: "numeric",
+                timeZone: PARIS_TIME_ZONE,
               }).format(date)}
             </strong>
             {view.type === "person" && <span>{play.game.title}</span>}

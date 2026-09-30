@@ -114,10 +114,17 @@ const DeleteActionButton = styled(GameActionButton)`
   }
 `;
 const DetailHeading = styled.div`
+  min-width: 0;
   display: grid;
   grid-template-columns: 145px 1fr;
   align-items: center;
   gap: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background-color: var(--paper);
+  background-position: center right;
+  background-size: cover;
   h2 {
     margin: 5px 0 7px;
     font-family: var(--serif);
@@ -136,6 +143,7 @@ const DetailHeading = styled.div`
   @media (max-width: 700px) {
     grid-template-columns: 110px minmax(0, 1fr);
     gap: 14px;
+    padding: 14px;
     h2 {
       font-size: 21px;
     }
@@ -469,7 +477,13 @@ export function GameDetailsPage({
           )}
         </div>
       </DetailsToolbar>
-      <DetailHeading>
+      <DetailHeading
+        style={{
+          backgroundImage: game.imageUrl
+            ? `linear-gradient(90deg, rgba(255, 254, 250, 0.96) 0%, rgba(255, 254, 250, 0.9) 58%, rgba(255, 254, 250, 0.76) 100%), url(${JSON.stringify(game.imageUrl)})`
+            : undefined,
+        }}
+      >
         <GameImage game={game} variant="detail" />
         <div>
           <DetailEyebrow>

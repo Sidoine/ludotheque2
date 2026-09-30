@@ -9,6 +9,7 @@ import {
   Pencil,
   Trophy,
 } from "lucide-react";
+import { PARIS_TIME_ZONE } from "@/lib/date-time";
 import { Avatar, GameImage, GameLink } from "../shared/primitives";
 import { Empty, Eyebrow, SecondaryButton } from "../shared/ui";
 import type { Play } from "../types";
@@ -201,6 +202,7 @@ export function PlayDetailsPage({
   const playedAt = new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "full",
     timeStyle: "short",
+    timeZone: PARIS_TIME_ZONE,
   }).format(new Date(play.playedAt));
 
   return (

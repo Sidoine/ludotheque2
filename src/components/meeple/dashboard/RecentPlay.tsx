@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "@emotion/styled";
-import { MapPin, Trophy } from "lucide-react";
+import { ArrowRight, MapPin, Trophy } from "lucide-react";
 import {
   AvatarStack,
   GameImage,
@@ -54,13 +54,32 @@ const Winner = styled.span<{ $lost?: boolean }>`
   color: ${({ $lost }) => ($lost ? "#a35341" : "var(--forest)")};
   font-size: 9px;
 `;
+const DetailsButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  padding: 3px 0 3px 6px;
+  border: 0;
+  color: var(--forest);
+  background: transparent;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  &:hover {
+    color: var(--gold);
+  }
+`;
 
 export function RecentPlay({
   play,
   onOpenGame,
+  onOpenPlay,
 }: {
   play: Play;
   onOpenGame: (gameId: number) => void;
+  onOpenPlay: (playId: number) => void;
 }) {
   const winners = play.participants
     .filter((item) => item.isWinner)
@@ -93,6 +112,13 @@ export function RecentPlay({
               <Trophy size={13} /> {play.groupWon ? "Victoire" : "Défaite"}
             </Winner>
           )}
+          <DetailsButton
+            type="button"
+            aria-label={`Voir les détails de la partie de ${play.game.title}`}
+            onClick={() => onOpenPlay(play.id)}
+          >
+            Détails <ArrowRight size={12} />
+          </DetailsButton>
         </ActivityBottom>
       </ActivityCopy>
     </ActivityRow>

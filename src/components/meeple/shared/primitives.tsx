@@ -4,11 +4,13 @@ import styled from "@emotion/styled";
 import { ChevronRight, Dices } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { PARIS_TIME_ZONE } from "@/lib/date-time";
 import type { Game, Person } from "../types";
 
 const shortDate = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "short",
+  timeZone: PARIS_TIME_ZONE,
 });
 
 const AvatarInitials = styled.span`
