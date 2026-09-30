@@ -2,8 +2,9 @@
 
 import styled from "@emotion/styled";
 import { ChevronRight, Dices } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import type { Game, Person } from "./types";
+import type { Game, Person } from "../types";
 
 const shortDate = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -258,12 +259,11 @@ export function relativeDate(value: string | Date) {
 export function Avatar({
   person,
   small = false,
-  onOpen,
 }: {
-  person: Pick<Person, "name" | "color">;
+  person: Pick<Person, "name" | "color"> & { id?: number };
   small?: boolean;
-  onOpen?: () => void;
 }) {
+  const router = useRouter();
   const content = initials(person.name);
   const children = (
     <>
@@ -271,7 +271,7 @@ export function Avatar({
       <AvatarName>{person.name}</AvatarName>
     </>
   );
-  if (onOpen) {
+  if (person.id !== undefined) {
     return (
       <AvatarButton
         $small={small}
@@ -281,7 +281,7 @@ export function Avatar({
         aria-label={`Ouvrir la fiche de ${person.name}`}
         onClick={(event) => {
           event.stopPropagation();
-          onOpen();
+          router.push(`/people/${person.id}`);
         }}
       >
         {children}
@@ -301,20 +301,13 @@ export function Avatar({
 
 export function AvatarStack({
   people,
-  onOpenPerson,
 }: {
   people: Pick<Person, "id" | "name" | "color">[];
-  onOpenPerson?: (personId: number) => void;
 }) {
   return (
     <AvatarStackContainer>
       {people.slice(0, 4).map((person) => (
-        <Avatar
-          key={person.id}
-          person={person}
-          small
-          onOpen={onOpenPerson ? () => onOpenPerson(person.id) : undefined}
-        />
+        <Avatar key={person.id} person={person} small />
       ))}
       {people.length > 4 && (
         <AvatarMore $small>+{people.length - 4}</AvatarMore>

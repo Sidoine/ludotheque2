@@ -2,9 +2,9 @@
 
 import styled from "@emotion/styled";
 import { Trash2 } from "lucide-react";
-import { ActionButton } from "./action-button";
-import { Modal, ModalActions, ModalContent } from "./modal";
-import type { Game } from "./types";
+import { ActionButton } from "../shared/action-button";
+import { Modal, ModalActions, ModalContent } from "../shared/modal";
+import type { Game } from "../types";
 
 const DeleteModalLayout = styled.div`
   flex: 1;

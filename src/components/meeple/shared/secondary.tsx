@@ -14,8 +14,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { DashboardData } from "@/lib/data";
+import type { Game } from "../types";
 import { EmptyState, GameImage, SectionHeading } from "./primitives";
-import type { Game } from "./types";
+import { Eyebrow } from "./ui";
 
 const frDate = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -383,14 +384,6 @@ const CodeSample = styled.div`
   color: var(--muted);
   background: white;
   font-size: 9px;
-`;
-const Eyebrow = styled.p`
-  margin: 0 0 5px;
-  color: var(--terracotta);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
 `;
 const ReadOnlyNote = styled.p`
   color: var(--muted);

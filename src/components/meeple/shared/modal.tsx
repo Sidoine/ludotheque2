@@ -3,6 +3,7 @@
 import styled from "@emotion/styled";
 import { X } from "lucide-react";
 import type { FormEventHandler, ReactNode } from "react";
+import { Eyebrow } from "./ui";
 
 const ModalBackdrop = styled.div`
   position: fixed;
@@ -64,15 +65,6 @@ const ModalHeader = styled.div`
   @media (max-width: 680px) {
     padding: 21px 19px 15px;
   }
-`;
-
-const Eyebrow = styled.p`
-  margin: 0 0 5px;
-  color: var(--terracotta);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
 `;
 
 const CloseButton = styled.button`

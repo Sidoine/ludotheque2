@@ -17,17 +17,17 @@ import {
 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import type { Game, Person, Play } from "../types";
 import { ActionButton } from "./action-button";
 import { Modal, ModalActions, ModalContent } from "./modal";
 import { Avatar } from "./primitives";
-import type { Game, Person, Play } from "./types";
 
 const FormGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 13px;
 `;
-const FormField = styled.label<{
+export const FormField = styled.label<{
   $wide?: boolean;
 }>`
   grid-column: ${({ $wide }) => ($wide ? "span 2" : "auto")};
@@ -73,7 +73,7 @@ const FormField = styled.label<{
     grid-column: auto;
   }
 `;
-const Spinner = styled(Loader2)`
+export const Spinner = styled(Loader2)`
   animation: modal-spin 0.9s linear infinite;
   @keyframes modal-spin {
     to {
@@ -329,7 +329,7 @@ const ResultButton = styled.button<{
   font-size: 10px;
   cursor: pointer;
 `;
-const SwitchField = styled.label`
+export const SwitchField = styled.label`
   display: flex;
   align-items: center;
   gap: 10px;
@@ -808,7 +808,7 @@ export function GameModal({
                 key={person.id}
                 onClick={() => toggleOwner(person.id)}
               >
-                <Avatar person={person} small /> {person.name}
+                {person.name}
                 <Check size={14} />
               </ChoiceButton>
             ))}
@@ -1050,7 +1050,7 @@ export function PlayModal({
                 key={person.id}
                 onClick={() => toggle(setParticipants, participants, person.id)}
               >
-                <Avatar person={person} small /> {person.name}
+                {person.name}
                 <Check size={14} />
               </ChoiceButton>
             ))}

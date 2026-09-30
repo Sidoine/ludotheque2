@@ -22,25 +22,31 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardData } from "@/lib/data";
-import { DashboardView } from "./meeple/dashboard";
-import { DeleteGameModal } from "./meeple/delete-game-modal";
+import { DashboardView } from "./meeple/dashboard/DashboardView";
+import { DeleteGameModal } from "./meeple/games/DeleteGameModal";
+import { GameDetailsPage } from "./meeple/games/GameDetailsPage";
+import { GameModal } from "./meeple/games/GameModal";
+import { GamesView } from "./meeple/games/GamesView";
+import { getSortedGames } from "./meeple/games/getSortedGames";
+import type {
+  GameFilter,
+  GameSort,
+  GamesNavigationState,
+} from "./meeple/games/types";
+import { PeopleView } from "./meeple/people/PeopleView";
+import { PersonDetailsPage } from "./meeple/people/PersonDetailsPage";
+import { PersonModal } from "./meeple/people/PersonModal";
+import { PlayDetailsPage } from "./meeple/plays/PlayDetailsPage";
+import { PlayModal } from "./meeple/plays/PlayModal";
+import { PlaysView } from "./meeple/plays/PlaysView";
+import { LoginModal } from "./meeple/shared/LoginModal";
+import { Avatar } from "./meeple/shared/primitives";
 import {
-  GameDetailsPage,
-  type GameFilter,
-  type GameSort,
-  type GamesNavigationState,
-  GamesView,
-  getSortedGames,
-} from "./meeple/library";
-import { GameModal, LoginModal, PersonModal, PlayModal } from "./meeple/modals";
-import { Avatar } from "./meeple/primitives";
-import { ImportView, LoansView, SaleView, StatsView } from "./meeple/secondary";
-import {
-  PeopleView,
-  PersonDetailsPage,
-  PlayDetailsPage,
-  PlaysView,
-} from "./meeple/social";
+  ImportView,
+  LoansView,
+  SaleView,
+  StatsView,
+} from "./meeple/shared/secondary";
 import type { Game, Person, Play, View } from "./meeple/types";
 
 type IconType = typeof LayoutDashboard;
@@ -874,7 +880,7 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               person={detailsPerson}
               plays={data.plays}
               canEdit={isAdmin}
-              onOpenGame={openGameDetails}
+              onOpenPlay={openPlayDetails}
               onBack={() => navigate("people")}
               onEdit={(person) => {
                 setEditingPerson(person);
@@ -918,7 +924,6 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               setView={navigate}
               onPlay={openPlay}
               onOpenGame={openGameDetails}
-              onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
             />
           ) : view === "games" ? (
@@ -927,7 +932,6 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               initialNavigation={navigationState}
               onPlay={openPlay}
               onOpenGame={openGameDetails}
-              onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
               onEdit={(game) => {
                 setEditingGame(game);
@@ -942,7 +946,6 @@ export function MeepleHouse({ data }: { data: DashboardData }) {
               onEdit={openEditPlay}
               onOpenPlay={openPlayDetails}
               onOpenGame={openGameDetails}
-              onOpenPerson={openPersonDetails}
               canEdit={isAdmin}
             />
           ) : view === "people" ? (

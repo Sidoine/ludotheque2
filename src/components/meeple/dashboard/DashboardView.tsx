@@ -3,26 +3,18 @@
 import styled from "@emotion/styled";
 import {
   ArrowRight,
-  Clock3,
   Dices,
   HandHeart,
-  House,
   LibraryBig,
-  MapPin,
-  Plus,
   Sparkles,
-  Trophy,
   Users,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/data";
-import {
-  AvatarStack,
-  GameImage,
-  GameLink,
-  relativeDate,
-  SectionHeading,
-} from "./primitives";
-import type { Game, Play, View } from "./types";
+import { SectionHeading } from "../shared/primitives";
+import { Eyebrow } from "../shared/ui";
+import type { Game, View } from "../types";
+import { GameRow } from "./GameRow";
+import { RecentPlay } from "./RecentPlay";
 
 const DashboardPanel = styled.div`
   min-height: 348px;
@@ -34,120 +26,6 @@ const DashboardPanel = styled.div`
 const GameRows = styled.div`
   display: flex;
   flex-direction: column;
-`;
-const GameRowContainer = styled.article`
-  min-height: 86px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 11px 3px;
-  border-top: 1px solid #eeece6;
-  &:first-child {
-    border-top: 0;
-  }
-`;
-const GameRowCopy = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-const GameRowTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-  h3 {
-    overflow: hidden;
-    margin: 0 0 4px;
-    font-family: var(--serif);
-    font-size: 14px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-`;
-const Badge = styled.span<{ $tone: "sale" | "loan" }>`
-  display: inline-flex;
-  align-items: center;
-  min-height: 18px;
-  padding: 0 7px;
-  border-radius: 10px;
-  font-size: 8px;
-  font-weight: 750;
-  white-space: nowrap;
-  color: ${({ $tone }) => ($tone === "sale" ? "#9d4f3d" : "#806425")};
-  background: ${({ $tone }) => ($tone === "sale" ? "#f5e2db" : "#f4e8bf")};
-`;
-const MicroMeta = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  color: #69756e;
-  font-size: 9px;
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-`;
-const GameRowStats = styled.div`
-  width: 46px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--muted);
-  strong {
-    color: var(--forest);
-    font-family: var(--serif);
-    font-size: 19px;
-    font-weight: 500;
-  }
-  span {
-    font-size: 8px;
-  }
-`;
-const ActivityRow = styled.article`
-  min-height: 91px;
-  display: flex;
-  gap: 12px;
-  padding: 11px 2px;
-  border-top: 1px solid #eeece6;
-  &:first-child {
-    border-top: 0;
-  }
-`;
-const ActivityCopy = styled.div`
-  min-width: 0;
-  flex: 1;
-`;
-const ActivityTitle = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  h3 {
-    overflow: hidden;
-    margin: 1px 0 5px;
-    font-family: var(--serif);
-    font-size: 13px;
-    font-weight: 600;
-  }
-  span {
-    color: #9aa09c;
-    font-size: 8px;
-    white-space: nowrap;
-  }
-`;
-const ActivityBottom = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-const Winner = styled.span<{ $lost?: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: ${({ $lost }) => ($lost ? "#a35341" : "var(--forest)")};
-  font-size: 9px;
 `;
 const StatsGrid = styled.section`
   display: grid;
@@ -323,139 +201,23 @@ const ChallengeSpark = styled.span`
   color: var(--forest-dark);
   background: #dfcf9c;
 `;
-const Eyebrow = styled.p`
-  margin: 0 0 5px;
-  color: var(--terracotta);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-`;
 const BarValue = styled.span`
   min-height: 12px;
   color: var(--muted);
   font-size: 9px;
 `;
 
-function GameRow({
-  game,
-  onPlay,
-  onOpen,
-  canEdit,
-}: {
-  game: Game;
-  onPlay: (game: Game) => void;
-  onOpen: () => void;
-  canEdit: boolean;
-}) {
-  const owners = game.ownerships.map((item) => item.person.name).join(", ");
-  return (
-    <GameRowContainer>
-      <GameImage game={game} variant="row" />
-      <GameRowCopy>
-        <GameRowTitle>
-          <h3>
-            <GameLink game={game} onOpen={onOpen} />
-          </h3>
-          {game.forSale && <Badge $tone="sale">À vendre</Badge>}
-          {game.activeLoan && <Badge $tone="loan">Emprunté</Badge>}
-        </GameRowTitle>
-        <p>{game.categories.slice(0, 2).join(" · ") || "Jeu de société"}</p>
-        <MicroMeta>
-          <span>
-            <Users size={13} /> {game.minPlayers ?? "?"}–
-            {game.maxPlayers ?? "?"}
-          </span>
-          <span>
-            <Clock3 size={13} />{" "}
-            {game.playingTime ? `${game.playingTime} min` : "Durée libre"}
-          </span>
-          {owners && (
-            <span>
-              <House size={13} /> {owners}
-            </span>
-          )}
-        </MicroMeta>
-      </GameRowCopy>
-      <GameRowStats>
-        <strong>{game.playCount}</strong>
-        <span>partie{game.playCount > 1 ? "s" : ""}</span>
-      </GameRowStats>
-      {canEdit && (
-        <button
-          onClick={() => onPlay(game)}
-          title="Ajouter une partie"
-          type="button"
-        >
-          <Plus size={18} />
-        </button>
-      )}
-    </GameRowContainer>
-  );
-}
-
-function RecentPlay({
-  play,
-  onOpenGame,
-  onOpenPerson,
-}: {
-  play: Play;
-  onOpenGame: (gameId: number) => void;
-  onOpenPerson: (personId: number) => void;
-}) {
-  const winners = play.participants
-    .filter((item) => item.isWinner)
-    .map((item) => item.person.name);
-  return (
-    <ActivityRow>
-      <GameImage game={play.game} variant="activity" />
-      <ActivityCopy>
-        <ActivityTitle>
-          <h3>
-            <GameLink
-              game={play.game}
-              onOpen={() => onOpenGame(play.game.id)}
-            />
-          </h3>
-          <span>{relativeDate(play.playedAt)}</span>
-        </ActivityTitle>
-        <p>
-          <MapPin size={13} /> {play.location}
-        </p>
-        <ActivityBottom>
-          <AvatarStack
-            people={play.participants.map((item) => item.person)}
-            onOpenPerson={onOpenPerson}
-          />
-          {winners.length > 0 && (
-            <Winner>
-              <Trophy size={13} /> {winners.join(" & ")}
-            </Winner>
-          )}
-          {play.game.cooperative && play.groupWon !== null && (
-            <Winner $lost={!play.groupWon}>
-              <Trophy size={13} /> {play.groupWon ? "Victoire" : "Défaite"}
-            </Winner>
-          )}
-        </ActivityBottom>
-      </ActivityCopy>
-    </ActivityRow>
-  );
-}
-
 export function DashboardView({
   data,
   setView,
   onPlay,
   onOpenGame,
-  onOpenPerson,
   canEdit,
 }: {
   data: DashboardData;
   setView: (view: View) => void;
   onPlay: (game?: Game) => void;
   onOpenGame: (gameId: number) => void;
-  onOpenPerson: (personId: number) => void;
   canEdit: boolean;
 }) {
   const maxChart = Math.max(...data.chart.map((item) => item.count), 1);
@@ -535,12 +297,7 @@ export function DashboardView({
           />
           <ActivityList>
             {data.plays.slice(0, 3).map((play) => (
-              <RecentPlay
-                key={play.id}
-                play={play}
-                onOpenGame={onOpenGame}
-                onOpenPerson={onOpenPerson}
-              />
+              <RecentPlay key={play.id} play={play} onOpenGame={onOpenGame} />
             ))}
           </ActivityList>
         </DashboardPanel>
